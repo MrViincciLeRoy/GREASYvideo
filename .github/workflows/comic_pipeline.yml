@@ -1,0 +1,180 @@
+name: Comic to Video Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      pdf_file:
+        description: 'PDF filename from data/ folder'
+        required: true
+        default: '[CH - 1] The Knight King Who Returned with a God.pdf'
+      start_page:
+        description: 'Start page number'
+        required: false
+        default: '2'
+      end_page:
+        description: 'End page number (leave empty for all pages)'
+        required: false
+        default: '10'
+      voice:
+        description: 'TTS voice (af_bella, af_sky, af_heart, am_adam, etc.)'
+        required: false
+        default: 'af_bella'
+      batch_size:
+        description: 'Video batch size (3-12)'
+        required: false
+        default: '3'
+
+jobs:
+  process-comic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480  # 8 hours max
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        lfs: true  # Enable Git LFS for large PDF files
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          tesseract-ocr \
+          espeak-ng \
+          ffmpeg \
+          libsm6 \
+          libxext6 \
+          libxrender-dev \
+          libgomp1
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Verify PDF exists
+      run: |
+        PDF_PATH="data/${{ github.event.inputs.pdf_file }}"
+        if [ ! -f "$PDF_PATH" ]; then
+          echo "❌ Error: PDF not found at $PDF_PATH"
+          exit 1
+        fi
+        echo "✓ PDF found: $PDF_PATH"
+        ls -lh "$PDF_PATH"
+    
+    - name: Run Comic Pipeline
+      env:
+        GROQ_KEY: ${{ secrets.GROQ_KEY }}
+        GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
+        GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
+        GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
+      run: |
+        PDF_PATH="data/${{ github.event.inputs.pdf_file }}"
+        
+        # Set end page parameter
+        END_PAGE_ARG=""
+        if [ -n "${{ github.event.inputs.end_page }}" ]; then
+          END_PAGE_ARG="--end-page ${{ github.event.inputs.end_page }}"
+        fi
+        
+        # Run the pipeline
+        python master_comic_pipeline.py "$PDF_PATH" \
+          --start-page ${{ github.event.inputs.start_page }} \
+          $END_PAGE_ARG \
+          --voice ${{ github.event.inputs.voice }} \
+          --batch-size ${{ github.event.inputs.batch_size }} \
+          --format auto \
+          --dpi 150 \
+          --output-dir comic_output
+    
+    - name: Check output structure
+      run: |
+        echo "📁 Output structure:"
+        tree comic_output -L 3 || ls -R comic_output
+        
+        echo ""
+        echo "📊 Output summary:"
+        du -sh comic_output/*
+    
+    - name: Prepare artifacts for upload
+      run: |
+        # Find the generated video
+        VIDEO_FILE=$(find comic_output -name "*.mp4" -type f | head -n 1)
+        
+        if [ -z "$VIDEO_FILE" ]; then
+          echo "❌ No video file found!"
+          exit 1
+        fi
+        
+        echo "✓ Video found: $VIDEO_FILE"
+        echo "VIDEO_PATH=$VIDEO_FILE" >> $GITHUB_ENV
+        
+        # Get video size
+        VIDEO_SIZE=$(du -h "$VIDEO_FILE" | cut -f1)
+        echo "VIDEO_SIZE=$VIDEO_SIZE" >> $GITHUB_ENV
+    
+    - name: Upload video artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: comic-video
+        path: ${{ env.VIDEO_PATH }}
+        retention-days: 30
+    
+    - name: Upload analysis artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: comic-analysis
+        path: |
+          comic_output/**/complete_analysis.json
+          comic_output/**/story_complete.json
+          comic_output/**/panel_to_story_mapping.json
+          comic_output/**/complete_character_tracking.json
+        retention-days: 30
+    
+    - name: Upload sample panels
+      uses: actions/upload-artifact@v4
+      with:
+        name: sample-panels
+        path: |
+          comic_output/**/page_*_panels/panel_01.jpg
+          comic_output/**/page_*_panels/panel_02.jpg
+        retention-days: 30
+    
+    - name: Generate summary
+      if: always()
+      run: |
+        echo "# 🎬 Comic Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Input" >> $GITHUB_STEP_SUMMARY
+        echo "- **PDF:** ${{ github.event.inputs.pdf_file }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Pages:** ${{ github.event.inputs.start_page }} - ${{ github.event.inputs.end_page || 'all' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Voice:** ${{ github.event.inputs.voice }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Batch Size:** ${{ github.event.inputs.batch_size }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "${{ env.VIDEO_PATH }}" ]; then
+          echo "## Output" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Video generated successfully!**" >> $GITHUB_STEP_SUMMARY
+          echo "- **Size:** ${{ env.VIDEO_SIZE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Location:** \`${{ env.VIDEO_PATH }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Download artifacts above to view the video." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## Output" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **Video generation failed**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the logs above for errors." >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        # Remove large temporary files to save space
+        find comic_output -name "*.png" -size +5M -delete
+        rm -rf comic_output/*/extracted_pages
