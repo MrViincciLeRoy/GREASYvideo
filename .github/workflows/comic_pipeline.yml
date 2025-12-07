@@ -51,7 +51,8 @@ jobs:
           libsm6 \
           libxext6 \
           libxrender-dev \
-          libgomp1
+          libgomp1 \
+          espeak-ng > /dev/null 2>&1 
     
     - name: Install Python dependencies
       run: |
