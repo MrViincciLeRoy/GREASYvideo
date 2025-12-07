@@ -436,7 +436,7 @@ if __name__ == "__main__":
         groq_keys=[ os.getenv('GROQ_KEY'), 
         os.getenv('GROQ_KEY_2'), 
        os.getenv('GROQ_KEY_3'), 
-       os.getenv('GROQ_KEY_4')] 
+       os.getenv('GROQ_KEY_4')], 
         huggingface_token=None,
         state_file="api_keys.json"
     )
