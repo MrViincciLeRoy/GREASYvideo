@@ -14,7 +14,8 @@ from datetime import datetime
 # Import key manager
 from enhanced_api_key_manager import APIKeyManager, ManagedGroqClient
 from character_tracker import CharacterTracker, CharacterGuide
-
+# Assume PanelDetector is available
+from panel_detector import PanelDetect
 @dataclass
 class PanelAnalysis:
     """Enhanced panel analysis with character tracking"""
@@ -100,8 +101,7 @@ class CharacterAwareComicAnalyzer:
         # Initialize character tracker
         self.character_tracker = CharacterTracker(character_guide)
 
-        # Assume PanelDetector is available
-        #from panel_detector import PanelDetector
+        
         self.detector = PanelDetector(comic_format=comic_format)
 
         print(f"✓ Character-Aware Comic Analyzer initialized")
