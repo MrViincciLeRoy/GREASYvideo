@@ -1,0 +1,187 @@
+name: Manga Database Scraper
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_page:
+        description: 'Starting page to scrape from'
+        required: false
+        default: '1'
+      max_links:
+        description: 'Maximum number of manga links to collect'
+        required: false
+        default: '1000'
+
+jobs:
+  scrape-manga-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y chromium-browser chromium-chromedriver
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install playwright
+        playwright install chromium
+        playwright install-deps
+    
+    - name: Run Scraper
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🕷️  STARTING MANGA SCRAPER"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "Start Page: ${{ github.event.inputs.start_page }}"
+        echo "Max Links: ${{ github.event.inputs.max_links }}"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        
+        python Scraper.py \
+          --start-page ${{ github.event.inputs.start_page }} \
+          --max-links ${{ github.event.inputs.max_links }}
+    
+    - name: Find generated database
+      id: find_db
+      run: |
+        # Find the most recent database file
+        DATABASE_FILE=$(ls -t manga_database_*.json 2>/dev/null | head -n 1)
+        
+        if [ -z "$DATABASE_FILE" ]; then
+          echo "❌ No database file generated!"
+          exit 1
+        fi
+        
+        echo "✓ Database generated: $DATABASE_FILE"
+        echo "DATABASE_FILE=$DATABASE_FILE" >> $GITHUB_ENV
+        
+        # Show database stats
+        echo ""
+        echo "📊 Database Statistics:"
+        python3 << EOF
+import json
+with open('$DATABASE_FILE', 'r') as f:
+    db = json.load(f)
+    meta = db['metadata']
+    print(f"  Total manga: {meta['total_manga']}")
+    print(f"  Completed: {meta['completed_count']}")
+    print(f"  Pending: {meta['pending_count']}")
+    print(f"  Last page scraped: {meta['last_page_scraped']}")
+    print(f"  Created: {meta['created_at']}")
+    print("")
+    print("📚 First 5 manga:")
+    for manga in db['manga'][:5]:
+        print(f"  {manga['id']}. {manga['title']}")
+EOF
+    
+    - name: Move database to data folder
+      run: |
+        echo ""
+        echo "📁 Moving database to data/ folder..."
+        mkdir -p data
+        cp "${{ env.DATABASE_FILE }}" data/
+        echo "✓ Database copied to data/${{ env.DATABASE_FILE }}"
+        ls -lh data/${{ env.DATABASE_FILE }}
+    
+    - name: Commit and push database
+      run: |
+        echo ""
+        echo "💾 Committing database to repository..."
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/${{ env.DATABASE_FILE }}
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "⚠️  No changes to commit"
+        else
+          git commit -m "🗃️ Add manga database: ${{ env.DATABASE_FILE }}" \
+                     -m "Scraped ${{ github.event.inputs.max_links }} manga links starting from page ${{ github.event.inputs.start_page }}"
+          git push
+          echo "✅ Database committed and pushed to repository!"
+        fi
+    
+    - name: Create latest symlink (optional)
+      run: |
+        # Create a 'latest' symlink for easy reference
+        cd data
+        ln -sf ${{ env.DATABASE_FILE }} manga_database_latest.json
+        git add manga_database_latest.json
+        git commit -m "🔗 Update latest database symlink" || echo "No changes"
+        git push || echo "Nothing to push"
+    
+    - name: Upload database artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: manga-database
+        path: data/${{ env.DATABASE_FILE }}
+        retention-days: 90
+    
+    - name: Generate summary
+      if: always()
+      run: |
+        echo "# 📚 Manga Database Scraper Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **Start Page:** ${{ github.event.inputs.start_page }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Max Links:** ${{ github.event.inputs.max_links }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "data/${{ env.DATABASE_FILE }}" ]; then
+          echo "## ✅ Database Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**File:** \`data/${{ env.DATABASE_FILE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add stats from database
+          python3 << 'EOF' >> $GITHUB_STEP_SUMMARY
+import json
+with open('data/${{ env.DATABASE_FILE }}', 'r') as f:
+    db = json.load(f)
+    meta = db['metadata']
+    print("## Statistics")
+    print("")
+    print(f"| Metric | Value |")
+    print(f"|--------|-------|")
+    print(f"| Total Manga | {meta['total_manga']:,} |")
+    print(f"| Completed | {meta['completed_count']} |")
+    print(f"| Pending | {meta['pending_count']:,} |")
+    print(f"| Last Page | {meta['last_page_scraped']} |")
+    print("")
+    print("## Sample Entries (First 10)")
+    print("")
+    for manga in db['manga'][:10]:
+        print(f"{manga['id']}. **{manga['title']}**")
+        print(f"   - URL: {manga['url']}")
+        print("")
+EOF
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Database has been committed to the repository" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 You can also download it from the artifacts above" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Use the **Download & Convert Manga to Video** workflow" >> $GITHUB_STEP_SUMMARY
+          echo "2. Set \`database_file\` to: \`${{ env.DATABASE_FILE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. Choose a manga index (1-${meta['total_manga']})" >> $GITHUB_STEP_SUMMARY
+          echo "4. Select chapter range to process" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ Database Creation Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the logs above for errors." >> $GITHUB_STEP_SUMMARY
+        fi
