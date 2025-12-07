@@ -14,9 +14,9 @@ from dataclasses import dataclass
 from datetime import datetime
 
 # Import enhanced key manager
-fromenhanced_api_key_manager import APIKeyManager, ManagedGroqClient
-fromcharacter_tracker import CharacterTracker, CharacterGuide
-fromanalyzer_with_key_manager import CharacterAwareComicAnalyzer, PageAnalysis
+from enhanced_api_key_manager import APIKeyManager, ManagedGroqClient
+from character_tracker import CharacterTracker, CharacterGuide
+from analyzer_with_key_manager import CharacterAwareComicAnalyzer, PageAnalysis
 
 @dataclass
 class ComicBookAnalysis:
