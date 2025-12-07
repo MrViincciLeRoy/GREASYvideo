@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from datetime import datetime
 
 # Import key manager
-#from api_key_manager import APIKeyManager, ManagedGroqClient
-#from character_tracker import CharacterTracker, CharacterGuide
+from api_key_manager import APIKeyManager, ManagedGroqClient
+from character_tracker import CharacterTracker, CharacterGuide
 
 @dataclass
 class PanelAnalysis:
