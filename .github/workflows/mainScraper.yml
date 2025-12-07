@@ -55,7 +55,6 @@ jobs:
     - name: Find generated database
       id: find_db
       run: |
-        # Find the most recent database file
         DATABASE_FILE=$(ls -t manga_database_*.json 2>/dev/null | head -n 1)
         
         if [ -z "$DATABASE_FILE" ]; then
@@ -66,24 +65,26 @@ jobs:
         echo "✓ Database generated: $DATABASE_FILE"
         echo "DATABASE_FILE=$DATABASE_FILE" >> $GITHUB_ENV
         
-        # Show database stats
         echo ""
         echo "📊 Database Statistics:"
-        python3 -c "
+        cat > show_stats.py << 'PYEOF'
 import json
-with open('$DATABASE_FILE', 'r') as f:
+import sys
+with open(sys.argv[1], 'r') as f:
     db = json.load(f)
     meta = db['metadata']
-    print(f\"  Total manga: {meta['total_manga']}\")
-    print(f\"  Completed: {meta['completed_count']}\")
-    print(f\"  Pending: {meta['pending_count']}\")
-    print(f\"  Last page scraped: {meta['last_page_scraped']}\")
-    print(f\"  Created: {meta['created_at']}\")
-    print(\"\")
-    print(\"📚 First 5 manga:\")
+    print(f"  Total manga: {meta['total_manga']}")
+    print(f"  Completed: {meta['completed_count']}")
+    print(f"  Pending: {meta['pending_count']}")
+    print(f"  Last page scraped: {meta['last_page_scraped']}")
+    print(f"  Created: {meta['created_at']}")
+    print("")
+    print("📚 First 5 manga:")
     for manga in db['manga'][:5]:
-        print(f\"  {manga['id']}. {manga['title']}\")
-"
+        print(f"  {manga['id']}. {manga['title']}")
+PYEOF
+        python3 show_stats.py "$DATABASE_FILE"
+        rm show_stats.py
     
     - name: Move database to data folder
       run: |
@@ -92,7 +93,7 @@ with open('$DATABASE_FILE', 'r') as f:
         mkdir -p data
         cp "${{ env.DATABASE_FILE }}" data/
         echo "✓ Database copied to data/${{ env.DATABASE_FILE }}"
-        ls -lh data/${{ env.DATABASE_FILE }}
+        ls -lh "data/${{ env.DATABASE_FILE }}"
     
     - name: Commit and push database
       run: |
@@ -100,9 +101,8 @@ with open('$DATABASE_FILE', 'r') as f:
         echo "💾 Committing database to repository..."
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add data/${{ env.DATABASE_FILE }}
+        git add "data/${{ env.DATABASE_FILE }}"
         
-        # Check if there are changes to commit
         if git diff --staged --quiet; then
           echo "⚠️  No changes to commit"
         else
@@ -112,11 +112,10 @@ with open('$DATABASE_FILE', 'r') as f:
           echo "✅ Database committed and pushed to repository!"
         fi
     
-    - name: Create latest symlink (optional)
+    - name: Create latest symlink
       run: |
-        # Create a 'latest' symlink for easy reference
         cd data
-        ln -sf ${{ env.DATABASE_FILE }} manga_database_latest.json
+        ln -sf "${{ env.DATABASE_FILE }}" manga_database_latest.json
         git add manga_database_latest.json
         git commit -m "🔗 Update latest database symlink" || echo "No changes"
         git push || echo "Nothing to push"
@@ -144,28 +143,30 @@ with open('$DATABASE_FILE', 'r') as f:
           echo "**File:** \`data/${{ env.DATABASE_FILE }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Add stats from database
-          python3 -c "
+          cat > summary_stats.py << 'PYEOF'
 import json
-with open('data/${{ env.DATABASE_FILE }}', 'r') as f:
+import sys
+with open(sys.argv[1], 'r') as f:
     db = json.load(f)
     meta = db['metadata']
     print('## Statistics')
     print('')
     print('| Metric | Value |')
     print('|--------|-------|')
-    print(f\"| Total Manga | {meta['total_manga']:,} |\")
-    print(f\"| Completed | {meta['completed_count']} |\")
-    print(f\"| Pending | {meta['pending_count']:,} |\")
-    print(f\"| Last Page | {meta['last_page_scraped']} |\")
+    print(f"| Total Manga | {meta['total_manga']:,} |")
+    print(f"| Completed | {meta['completed_count']} |")
+    print(f"| Pending | {meta['pending_count']:,} |")
+    print(f"| Last Page | {meta['last_page_scraped']} |")
     print('')
     print('## Sample Entries (First 10)')
     print('')
     for manga in db['manga'][:10]:
-        print(f\"{manga['id']}. **{manga['title']}**\")
-        print(f\"   - URL: {manga['url']}\")
+        print(f"{manga['id']}. **{manga['title']}**")
+        print(f"   - URL: {manga['url']}")
         print('')
-" >> $GITHUB_STEP_SUMMARY
+PYEOF
+          python3 summary_stats.py "data/${{ env.DATABASE_FILE }}" >> $GITHUB_STEP_SUMMARY
+          rm summary_stats.py
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
@@ -178,7 +179,7 @@ with open('data/${{ env.DATABASE_FILE }}', 'r') as f:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "1. Use the **Download & Convert Manga to Video** workflow" >> $GITHUB_STEP_SUMMARY
           echo "2. Set \`database_file\` to: \`${{ env.DATABASE_FILE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "3. Choose a manga index (1-\${meta['total_manga']})" >> $GITHUB_STEP_SUMMARY
+          echo "3. Choose a manga index to process" >> $GITHUB_STEP_SUMMARY
           echo "4. Select chapter range to process" >> $GITHUB_STEP_SUMMARY
         else
           echo "## ❌ Database Creation Failed" >> $GITHUB_STEP_SUMMARY
