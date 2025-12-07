@@ -1,0 +1,1241 @@
+{
+  "metadata": {
+    "created_at": "20251207_090722",
+    "total_manga": 123,
+    "last_page_scraped": 11,
+    "completed_count": 0,
+    "pending_count": 123
+  },
+  "manga": [
+    {
+      "id": 1,
+      "manga_id": "doctors-rebirth-a55e95c5",
+      "title": "Doctors Rebirth A55E95C5",
+      "url": "https://asuracomic.net/series/doctors-rebirth-a55e95c5",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 2,
+      "manga_id": "necromancers-evolutionary-traits-b7bdb0aa",
+      "title": "Necromancers Evolutionary Traits B7Bdb0Aa",
+      "url": "https://asuracomic.net/series/necromancers-evolutionary-traits-b7bdb0aa",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 3,
+      "manga_id": "the-illegitimate-who-devours-weapons-5de2813f",
+      "title": "The Illegitimate Who Devours Weapons 5De2813F",
+      "url": "https://asuracomic.net/series/the-illegitimate-who-devours-weapons-5de2813f",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 4,
+      "manga_id": "the-executioner-25df8208",
+      "title": "The Executioner 25Df8208",
+      "url": "https://asuracomic.net/series/the-executioner-25df8208",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 5,
+      "manga_id": "a-mercenarys-rebirth-among-nobles-766d414e",
+      "title": "A Mercenarys Rebirth Among Nobles 766D414E",
+      "url": "https://asuracomic.net/series/a-mercenarys-rebirth-among-nobles-766d414e",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 6,
+      "manga_id": "the-academys-sashimi-sword-master-8197daa9",
+      "title": "The Academys Sashimi Sword Master 8197Daa9",
+      "url": "https://asuracomic.net/series/the-academys-sashimi-sword-master-8197daa9",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 7,
+      "manga_id": "duke-pendragon-ef4f2a23",
+      "title": "Duke Pendragon Ef4F2A23",
+      "url": "https://asuracomic.net/series/duke-pendragon-ef4f2a23",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 8,
+      "manga_id": "the-extras-academy-survival-guide-a4c621aa",
+      "title": "The Extras Academy Survival Guide A4C621Aa",
+      "url": "https://asuracomic.net/series/the-extras-academy-survival-guide-a4c621aa",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 9,
+      "manga_id": "the-heavenly-demon-cant-live-a-normal-life-5f16645d",
+      "title": "The Heavenly Demon Cant Live A Normal Life 5F16645D",
+      "url": "https://asuracomic.net/series/the-heavenly-demon-cant-live-a-normal-life-5f16645d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 10,
+      "manga_id": "helmut-the-forsaken-child-3d035f43",
+      "title": "Helmut The Forsaken Child 3D035F43",
+      "url": "https://asuracomic.net/series/helmut-the-forsaken-child-3d035f43",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 11,
+      "manga_id": "overpowered-sword-f787da16",
+      "title": "Overpowered Sword F787Da16",
+      "url": "https://asuracomic.net/series/overpowered-sword-f787da16",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 12,
+      "manga_id": "reincarnator-c27d4e95",
+      "title": "Reincarnator C27D4E95",
+      "url": "https://asuracomic.net/series/reincarnator-c27d4e95",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 13,
+      "manga_id": "return-of-the-disaster-class-hero-558e2e6a",
+      "title": "Return Of The Disaster Class Hero 558E2E6A",
+      "url": "https://asuracomic.net/series/return-of-the-disaster-class-hero-558e2e6a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 14,
+      "manga_id": "reaper-of-the-drifting-moon-60a8cf8d",
+      "title": "Reaper Of The Drifting Moon 60A8Cf8D",
+      "url": "https://asuracomic.net/series/reaper-of-the-drifting-moon-60a8cf8d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 15,
+      "manga_id": "boundless-necromancer-4f6071e1",
+      "title": "Boundless Necromancer 4F6071E1",
+      "url": "https://asuracomic.net/series/boundless-necromancer-4f6071e1",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 16,
+      "manga_id": "worthless-regression-3c8b8de1",
+      "title": "Worthless Regression 3C8B8De1",
+      "url": "https://asuracomic.net/series/worthless-regression-3c8b8de1",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 17,
+      "manga_id": "heavenly-inquisition-sword-ffae9b1a",
+      "title": "Heavenly Inquisition Sword Ffae9B1A",
+      "url": "https://asuracomic.net/series/heavenly-inquisition-sword-ffae9b1a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 18,
+      "manga_id": "return-of-the-shattered-constellation-85b5036f",
+      "title": "Return Of The Shattered Constellation 85B5036F",
+      "url": "https://asuracomic.net/series/return-of-the-shattered-constellation-85b5036f",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 19,
+      "manga_id": "your-talent-is-mine-f0f2d9c7",
+      "title": "Your Talent Is Mine F0F2D9C7",
+      "url": "https://asuracomic.net/series/your-talent-is-mine-f0f2d9c7",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 20,
+      "manga_id": "legend-of-the-reincarnated-demon-god-497a36ae",
+      "title": "Legend Of The Reincarnated Demon God 497A36Ae",
+      "url": "https://asuracomic.net/series/legend-of-the-reincarnated-demon-god-497a36ae",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 21,
+      "manga_id": "trash-of-the-counts-family-fab35033",
+      "title": "Trash Of The Counts Family Fab35033",
+      "url": "https://asuracomic.net/series/trash-of-the-counts-family-fab35033",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 22,
+      "manga_id": "the-tutorial-is-too-hard-95dc67fb",
+      "title": "The Tutorial Is Too Hard 95Dc67Fb",
+      "url": "https://asuracomic.net/series/the-tutorial-is-too-hard-95dc67fb",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 23,
+      "manga_id": "the-regressed-son-of-a-duke-is-an-assassin-79249771",
+      "title": "The Regressed Son Of A Duke Is An Assassin 79249771",
+      "url": "https://asuracomic.net/series/the-regressed-son-of-a-duke-is-an-assassin-79249771",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 24,
+      "manga_id": "the-novels-extra-remake-ec24d9f7",
+      "title": "The Novels Extra Remake Ec24D9F7",
+      "url": "https://asuracomic.net/series/the-novels-extra-remake-ec24d9f7",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 25,
+      "manga_id": "regressing-with-the-kings-power-a6dd6e15",
+      "title": "Regressing With The Kings Power A6Dd6E15",
+      "url": "https://asuracomic.net/series/regressing-with-the-kings-power-a6dd6e15",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 26,
+      "manga_id": "wandering-warrior-of-wudang-f58e2fe9",
+      "title": "Wandering Warrior Of Wudang F58E2Fe9",
+      "url": "https://asuracomic.net/series/wandering-warrior-of-wudang-f58e2fe9",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 27,
+      "manga_id": "academys-undercover-professor-1c6ecaf2",
+      "title": "Academys Undercover Professor 1C6Ecaf2",
+      "url": "https://asuracomic.net/series/academys-undercover-professor-1c6ecaf2",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 28,
+      "manga_id": "star-embracing-swordmaster-19361c6e",
+      "title": "Star Embracing Swordmaster 19361C6E",
+      "url": "https://asuracomic.net/series/star-embracing-swordmaster-19361c6e",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 29,
+      "manga_id": "the-dark-magician-transmigrates-after-66666-years-9e24f661",
+      "title": "The Dark Magician Transmigrates After 66666 Years 9E24F661",
+      "url": "https://asuracomic.net/series/the-dark-magician-transmigrates-after-66666-years-9e24f661",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 30,
+      "manga_id": "standard-of-reincarnation-98fb75bf",
+      "title": "Standard Of Reincarnation 98Fb75Bf",
+      "url": "https://asuracomic.net/series/standard-of-reincarnation-98fb75bf",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 31,
+      "manga_id": "damn-reincarnation-b869bcaf",
+      "title": "Damn Reincarnation B869Bcaf",
+      "url": "https://asuracomic.net/series/damn-reincarnation-b869bcaf",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 32,
+      "manga_id": "reincarnation-of-the-fist-king-ae17898f",
+      "title": "Reincarnation Of The Fist King Ae17898F",
+      "url": "https://asuracomic.net/series/reincarnation-of-the-fist-king-ae17898f",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 33,
+      "manga_id": "villain-to-kill-0f4e64a7",
+      "title": "Villain To Kill 0F4E64A7",
+      "url": "https://asuracomic.net/series/villain-to-kill-0f4e64a7",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 34,
+      "manga_id": "surviving-the-game-as-a-barbarian-c62dc212",
+      "title": "Surviving The Game As A Barbarian C62Dc212",
+      "url": "https://asuracomic.net/series/surviving-the-game-as-a-barbarian-c62dc212",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 35,
+      "manga_id": "bones-7d71cdc2",
+      "title": "Bones 7D71Cdc2",
+      "url": "https://asuracomic.net/series/bones-7d71cdc2",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 36,
+      "manga_id": "reformation-of-the-deadbeat-noble-ff4993ae",
+      "title": "Reformation Of The Deadbeat Noble Ff4993Ae",
+      "url": "https://asuracomic.net/series/reformation-of-the-deadbeat-noble-ff4993ae",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 37,
+      "manga_id": "academys-genius-swordmaster-2b6f35b3",
+      "title": "Academys Genius Swordmaster 2B6F35B3",
+      "url": "https://asuracomic.net/series/academys-genius-swordmaster-2b6f35b3",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 38,
+      "manga_id": "logging-10000-years-into-the-future-4a3d9edd",
+      "title": "Logging 10000 Years Into The Future 4A3D9Edd",
+      "url": "https://asuracomic.net/series/logging-10000-years-into-the-future-4a3d9edd",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 39,
+      "manga_id": "reincarnation-of-the-suicidal-battle-god-0844c307",
+      "title": "Reincarnation Of The Suicidal Battle God 0844C307",
+      "url": "https://asuracomic.net/series/reincarnation-of-the-suicidal-battle-god-0844c307",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 40,
+      "manga_id": "margraves-bastard-son-was-the-emperor-a9192a55",
+      "title": "Margraves Bastard Son Was The Emperor A9192A55",
+      "url": "https://asuracomic.net/series/margraves-bastard-son-was-the-emperor-a9192a55",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 41,
+      "manga_id": "the-max-level-players-100th-regression-11f3a34a",
+      "title": "The Max Level Players 100Th Regression 11F3A34A",
+      "url": "https://asuracomic.net/series/the-max-level-players-100th-regression-11f3a34a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 42,
+      "manga_id": "a-regressors-tale-of-cultivation-918d9bab",
+      "title": "A Regressors Tale Of Cultivation 918D9Bab",
+      "url": "https://asuracomic.net/series/a-regressors-tale-of-cultivation-918d9bab",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 43,
+      "manga_id": "absolute-necromancer-49501f6a",
+      "title": "Absolute Necromancer 49501F6A",
+      "url": "https://asuracomic.net/series/absolute-necromancer-49501f6a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 44,
+      "manga_id": "infinite-mage-c3ad082d",
+      "title": "Infinite Mage C3Ad082D",
+      "url": "https://asuracomic.net/series/infinite-mage-c3ad082d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 45,
+      "manga_id": "childhood-friend-of-the-zenith-1cac9a4d",
+      "title": "Childhood Friend Of The Zenith 1Cac9A4D",
+      "url": "https://asuracomic.net/series/childhood-friend-of-the-zenith-1cac9a4d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 46,
+      "manga_id": "the-priest-of-corruption-f4b0b33f",
+      "title": "The Priest Of Corruption F4B0B33F",
+      "url": "https://asuracomic.net/series/the-priest-of-corruption-f4b0b33f",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 47,
+      "manga_id": "solo-leveling-ragnarok-d0f93d0d",
+      "title": "Solo Leveling Ragnarok D0F93D0D",
+      "url": "https://asuracomic.net/series/solo-leveling-ragnarok-d0f93d0d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 48,
+      "manga_id": "bloodhounds-regression-instinct-c4edb16e",
+      "title": "Bloodhounds Regression Instinct C4Edb16E",
+      "url": "https://asuracomic.net/series/bloodhounds-regression-instinct-c4edb16e",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 49,
+      "manga_id": "the-hero-returns-01e6ac02",
+      "title": "The Hero Returns 01E6Ac02",
+      "url": "https://asuracomic.net/series/the-hero-returns-01e6ac02",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 50,
+      "manga_id": "the-knight-king-who-returned-with-a-god-d9fb49c0",
+      "title": "The Knight King Who Returned With A God D9Fb49C0",
+      "url": "https://asuracomic.net/series/the-knight-king-who-returned-with-a-god-d9fb49c0",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 51,
+      "manga_id": "the-ultimate-shut-in-15525424",
+      "title": "The Ultimate Shut In 15525424",
+      "url": "https://asuracomic.net/series/the-ultimate-shut-in-15525424",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 52,
+      "manga_id": "eternally-regressing-knight-6a606ba4",
+      "title": "Eternally Regressing Knight 6A606Ba4",
+      "url": "https://asuracomic.net/series/eternally-regressing-knight-6a606ba4",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 53,
+      "manga_id": "dragon-devouring-mage-1e04513b",
+      "title": "Dragon Devouring Mage 1E04513B",
+      "url": "https://asuracomic.net/series/dragon-devouring-mage-1e04513b",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 54,
+      "manga_id": "the-max-level-hero-has-returned-1f33f452",
+      "title": "The Max Level Hero Has Returned 1F33F452",
+      "url": "https://asuracomic.net/series/the-max-level-hero-has-returned-1f33f452",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 55,
+      "manga_id": "the-divine-demons-grand-ascension-ed7783f2",
+      "title": "The Divine Demons Grand Ascension Ed7783F2",
+      "url": "https://asuracomic.net/series/the-divine-demons-grand-ascension-ed7783f2",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 56,
+      "manga_id": "the-regressed-mercenarys-machinations-3a16d25d",
+      "title": "The Regressed Mercenarys Machinations 3A16D25D",
+      "url": "https://asuracomic.net/series/the-regressed-mercenarys-machinations-3a16d25d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 57,
+      "manga_id": "surviving-as-a-genius-on-borrowed-time-869429e8",
+      "title": "Surviving As A Genius On Borrowed Time 869429E8",
+      "url": "https://asuracomic.net/series/surviving-as-a-genius-on-borrowed-time-869429e8",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 58,
+      "manga_id": "murim-login-d844d25a",
+      "title": "Murim Login D844D25A",
+      "url": "https://asuracomic.net/series/murim-login-d844d25a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 59,
+      "manga_id": "the-greatest-estate-developer-efbd1177",
+      "title": "The Greatest Estate Developer Efbd1177",
+      "url": "https://asuracomic.net/series/the-greatest-estate-developer-efbd1177",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 60,
+      "manga_id": "life-of-a-magic-academy-mage-16a0fcac",
+      "title": "Life Of A Magic Academy Mage 16A0Fcac",
+      "url": "https://asuracomic.net/series/life-of-a-magic-academy-mage-16a0fcac",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 61,
+      "manga_id": "the-dark-mages-return-to-enlistment-010e64df",
+      "title": "The Dark Mages Return To Enlistment 010E64Df",
+      "url": "https://asuracomic.net/series/the-dark-mages-return-to-enlistment-010e64df",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 62,
+      "manga_id": "youngest-scion-of-the-mages-ad21e5fb",
+      "title": "Youngest Scion Of The Mages Ad21E5Fb",
+      "url": "https://asuracomic.net/series/youngest-scion-of-the-mages-ad21e5fb",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 63,
+      "manga_id": "the-genius-assassin-who-takes-it-all-38ce8d06",
+      "title": "The Genius Assassin Who Takes It All 38Ce8D06",
+      "url": "https://asuracomic.net/series/the-genius-assassin-who-takes-it-all-38ce8d06",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 64,
+      "manga_id": "omniscient-readers-viewpoint-a89cdf3a",
+      "title": "Omniscient Readers Viewpoint A89Cdf3A",
+      "url": "https://asuracomic.net/series/omniscient-readers-viewpoint-a89cdf3a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 65,
+      "manga_id": "the-indomitable-martial-king-e73ae281",
+      "title": "The Indomitable Martial King E73Ae281",
+      "url": "https://asuracomic.net/series/the-indomitable-martial-king-e73ae281",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 66,
+      "manga_id": "myst-might-mayhem-be4e7655",
+      "title": "Myst Might Mayhem Be4E7655",
+      "url": "https://asuracomic.net/series/myst-might-mayhem-be4e7655",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 67,
+      "manga_id": "terminally-ill-genius-dark-knight-3116221f",
+      "title": "Terminally Ill Genius Dark Knight 3116221F",
+      "url": "https://asuracomic.net/series/terminally-ill-genius-dark-knight-3116221f",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 68,
+      "manga_id": "the-last-adventurer-c74e6045",
+      "title": "The Last Adventurer C74E6045",
+      "url": "https://asuracomic.net/series/the-last-adventurer-c74e6045",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 69,
+      "manga_id": "reborn-as-the-enemy-prince-db27fa23",
+      "title": "Reborn As The Enemy Prince Db27Fa23",
+      "url": "https://asuracomic.net/series/reborn-as-the-enemy-prince-db27fa23",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 70,
+      "manga_id": "the-s-classes-that-i-raised-b21d17ec",
+      "title": "The S Classes That I Raised B21D17Ec",
+      "url": "https://asuracomic.net/series/the-s-classes-that-i-raised-b21d17ec",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 71,
+      "manga_id": "chronicles-of-the-demon-faction-831d7dad",
+      "title": "Chronicles Of The Demon Faction 831D7Dad",
+      "url": "https://asuracomic.net/series/chronicles-of-the-demon-faction-831d7dad",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 72,
+      "manga_id": "steel-eating-player-36b180bb",
+      "title": "Steel Eating Player 36B180Bb",
+      "url": "https://asuracomic.net/series/steel-eating-player-36b180bb",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 73,
+      "manga_id": "sss-class-suicide-hunter-e0373971",
+      "title": "Sss Class Suicide Hunter E0373971",
+      "url": "https://asuracomic.net/series/sss-class-suicide-hunter-e0373971",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 74,
+      "manga_id": "the-fox-eyed-villain-of-the-demon-academy-dae9e11b",
+      "title": "The Fox Eyed Villain Of The Demon Academy Dae9E11B",
+      "url": "https://asuracomic.net/series/the-fox-eyed-villain-of-the-demon-academy-dae9e11b",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 75,
+      "manga_id": "regressor-instruction-manual-4a2243ef",
+      "title": "Regressor Instruction Manual 4A2243Ef",
+      "url": "https://asuracomic.net/series/regressor-instruction-manual-4a2243ef",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 76,
+      "manga_id": "absolute-regression-4c146dd1",
+      "title": "Absolute Regression 4C146Dd1",
+      "url": "https://asuracomic.net/series/absolute-regression-4c146dd1",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 77,
+      "manga_id": "my-exclusive-tower-guide-98524ca2",
+      "title": "My Exclusive Tower Guide 98524Ca2",
+      "url": "https://asuracomic.net/series/my-exclusive-tower-guide-98524ca2",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 78,
+      "manga_id": "mount-hua-sects-genius-phantom-swordsman-bbde964b",
+      "title": "Mount Hua Sects Genius Phantom Swordsman Bbde964B",
+      "url": "https://asuracomic.net/series/mount-hua-sects-genius-phantom-swordsman-bbde964b",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 79,
+      "manga_id": "genius-of-the-unique-lineage-1ac28b54",
+      "title": "Genius Of The Unique Lineage 1Ac28B54",
+      "url": "https://asuracomic.net/series/genius-of-the-unique-lineage-1ac28b54",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 80,
+      "manga_id": "pick-me-up-infinite-gacha-b7e74509",
+      "title": "Pick Me Up Infinite Gacha B7E74509",
+      "url": "https://asuracomic.net/series/pick-me-up-infinite-gacha-b7e74509",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 81,
+      "manga_id": "my-school-life-pretending-to-be-a-worthless-person-d35ccef7",
+      "title": "My School Life Pretending To Be A Worthless Person D35Ccef7",
+      "url": "https://asuracomic.net/series/my-school-life-pretending-to-be-a-worthless-person-d35ccef7",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 82,
+      "manga_id": "return-of-the-mount-hua-sect-b03d521b",
+      "title": "Return Of The Mount Hua Sect B03D521B",
+      "url": "https://asuracomic.net/series/return-of-the-mount-hua-sect-b03d521b",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 83,
+      "manga_id": "return-of-the-unrivaled-spear-knight-d5fb82a9",
+      "title": "Return Of The Unrivaled Spear Knight D5Fb82A9",
+      "url": "https://asuracomic.net/series/return-of-the-unrivaled-spear-knight-d5fb82a9",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 84,
+      "manga_id": "genius-prismatic-mage-ee187951",
+      "title": "Genius Prismatic Mage Ee187951",
+      "url": "https://asuracomic.net/series/genius-prismatic-mage-ee187951",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 85,
+      "manga_id": "i-obtained-a-mythic-item-4e649475",
+      "title": "I Obtained A Mythic Item 4E649475",
+      "url": "https://asuracomic.net/series/i-obtained-a-mythic-item-4e649475",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 86,
+      "manga_id": "player-who-cant-level-up-929707c6",
+      "title": "Player Who Cant Level Up 929707C6",
+      "url": "https://asuracomic.net/series/player-who-cant-level-up-929707c6",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 87,
+      "manga_id": "bad-born-blood-3a64143d",
+      "title": "Bad Born Blood 3A64143D",
+      "url": "https://asuracomic.net/series/bad-born-blood-3a64143d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 88,
+      "manga_id": "chronicles-of-the-martial-gods-return-8d56d6ee",
+      "title": "Chronicles Of The Martial Gods Return 8D56D6Ee",
+      "url": "https://asuracomic.net/series/chronicles-of-the-martial-gods-return-8d56d6ee",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 89,
+      "manga_id": "superhuman-battlefield-4f3b15bc",
+      "title": "Superhuman Battlefield 4F3B15Bc",
+      "url": "https://asuracomic.net/series/superhuman-battlefield-4f3b15bc",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 90,
+      "manga_id": "absolute-sword-sense-176e220b",
+      "title": "Absolute Sword Sense 176E220B",
+      "url": "https://asuracomic.net/series/absolute-sword-sense-176e220b",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 91,
+      "manga_id": "the-return-of-the-crazy-demon-b61f1bf0",
+      "title": "The Return Of The Crazy Demon B61F1Bf0",
+      "url": "https://asuracomic.net/series/the-return-of-the-crazy-demon-b61f1bf0",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 92,
+      "manga_id": "i-killed-an-academy-player-72e38a89",
+      "title": "I Killed An Academy Player 72E38A89",
+      "url": "https://asuracomic.net/series/i-killed-an-academy-player-72e38a89",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 93,
+      "manga_id": "star-instructor-master-baek-02631056",
+      "title": "Star Instructor Master Baek 02631056",
+      "url": "https://asuracomic.net/series/star-instructor-master-baek-02631056",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 94,
+      "manga_id": "i-am-the-fated-villain-0780c13e",
+      "title": "I Am The Fated Villain 0780C13E",
+      "url": "https://asuracomic.net/series/i-am-the-fated-villain-0780c13e",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 95,
+      "manga_id": "player-who-returned-10000-years-later-88bfabff",
+      "title": "Player Who Returned 10000 Years Later 88Bfabff",
+      "url": "https://asuracomic.net/series/player-who-returned-10000-years-later-88bfabff",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 96,
+      "manga_id": "the-reincarnated-assassin-is-a-genius-swordsman-e37c690a",
+      "title": "The Reincarnated Assassin Is A Genius Swordsman E37C690A",
+      "url": "https://asuracomic.net/series/the-reincarnated-assassin-is-a-genius-swordsman-e37c690a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 97,
+      "manga_id": "solo-max-level-newbie-d02ee28f",
+      "title": "Solo Max Level Newbie D02Ee28F",
+      "url": "https://asuracomic.net/series/solo-max-level-newbie-d02ee28f",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 98,
+      "manga_id": "revenge-of-the-iron-blooded-sword-hound-e02523ce",
+      "title": "Revenge Of The Iron Blooded Sword Hound E02523Ce",
+      "url": "https://asuracomic.net/series/revenge-of-the-iron-blooded-sword-hound-e02523ce",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 99,
+      "manga_id": "martial-god-regressed-to-level-2-f321d2b3",
+      "title": "Martial God Regressed To Level 2 F321D2B3",
+      "url": "https://asuracomic.net/series/martial-god-regressed-to-level-2-f321d2b3",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 100,
+      "manga_id": "magic-academys-genius-blinker-c88fbfb0",
+      "title": "Magic Academys Genius Blinker C88Fbfb0",
+      "url": "https://asuracomic.net/series/magic-academys-genius-blinker-c88fbfb0",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 101,
+      "manga_id": "a-villains-will-to-survive-85b418b5",
+      "title": "A Villains Will To Survive 85B418B5",
+      "url": "https://asuracomic.net/series/a-villains-will-to-survive-85b418b5",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 102,
+      "manga_id": "genius-martial-arts-trainer-9dd60d29",
+      "title": "Genius Martial Arts Trainer 9Dd60D29",
+      "url": "https://asuracomic.net/series/genius-martial-arts-trainer-9dd60d29",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 103,
+      "manga_id": "the-player-hides-his-past-ba2669bc",
+      "title": "The Player Hides His Past Ba2669Bc",
+      "url": "https://asuracomic.net/series/the-player-hides-his-past-ba2669bc",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 104,
+      "manga_id": "the-nebulas-civilization-ec6dc3be",
+      "title": "The Nebulas Civilization Ec6Dc3Be",
+      "url": "https://asuracomic.net/series/the-nebulas-civilization-ec6dc3be",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 105,
+      "manga_id": "mr-devourer-please-act-like-a-final-boss-417fe321",
+      "title": "Mr Devourer Please Act Like A Final Boss 417Fe321",
+      "url": "https://asuracomic.net/series/mr-devourer-please-act-like-a-final-boss-417fe321",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 106,
+      "manga_id": "solo-leveling-95c8f875",
+      "title": "Solo Leveling 95C8F875",
+      "url": "https://asuracomic.net/series/solo-leveling-95c8f875",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 107,
+      "manga_id": "crimson-reset-7f8cc0c2",
+      "title": "Crimson Reset 7F8Cc0C2",
+      "url": "https://asuracomic.net/series/crimson-reset-7f8cc0c2",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 108,
+      "manga_id": "the-heavenly-demon-wants-a-quiet-life-32a09ad8",
+      "title": "The Heavenly Demon Wants A Quiet Life 32A09Ad8",
+      "url": "https://asuracomic.net/series/the-heavenly-demon-wants-a-quiet-life-32a09ad8",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 109,
+      "manga_id": "return-of-the-sss-class-ranker-29fb3402",
+      "title": "Return Of The Sss Class Ranker 29Fb3402",
+      "url": "https://asuracomic.net/series/return-of-the-sss-class-ranker-29fb3402",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 110,
+      "manga_id": "talent-swallowing-magician-ba145967",
+      "title": "Talent Swallowing Magician Ba145967",
+      "url": "https://asuracomic.net/series/talent-swallowing-magician-ba145967",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 111,
+      "manga_id": "killer-pietro-3eb6f039",
+      "title": "Killer Pietro 3Eb6F039",
+      "url": "https://asuracomic.net/series/killer-pietro-3eb6f039",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 112,
+      "manga_id": "fated-to-be-loved-by-villains-2b229d47",
+      "title": "Fated To Be Loved By Villains 2B229D47",
+      "url": "https://asuracomic.net/series/fated-to-be-loved-by-villains-2b229d47",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 113,
+      "manga_id": "regressor-of-the-fallen-family-f8b71683",
+      "title": "Regressor Of The Fallen Family F8B71683",
+      "url": "https://asuracomic.net/series/regressor-of-the-fallen-family-f8b71683",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 114,
+      "manga_id": "genius-archers-streaming-27522b5b",
+      "title": "Genius Archers Streaming 27522B5B",
+      "url": "https://asuracomic.net/series/genius-archers-streaming-27522b5b",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 115,
+      "manga_id": "overgeared-881f2077",
+      "title": "Overgeared 881F2077",
+      "url": "https://asuracomic.net/series/overgeared-881f2077",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 116,
+      "manga_id": "trait-hoarder-ce66856d",
+      "title": "Trait Hoarder Ce66856D",
+      "url": "https://asuracomic.net/series/trait-hoarder-ce66856d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 117,
+      "manga_id": "nano-machine-2be0895e",
+      "title": "Nano Machine 2Be0895E",
+      "url": "https://asuracomic.net/series/nano-machine-2be0895e",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 118,
+      "manga_id": "swordmasters-youngest-son-c5dafd3e",
+      "title": "Swordmasters Youngest Son C5Dafd3E",
+      "url": "https://asuracomic.net/series/swordmasters-youngest-son-c5dafd3e",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 119,
+      "manga_id": "a-dragonslayers-peerless-regression-34f5b44a",
+      "title": "A Dragonslayers Peerless Regression 34F5B44A",
+      "url": "https://asuracomic.net/series/a-dragonslayers-peerless-regression-34f5b44a",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 120,
+      "manga_id": "dungeon-odyssey-41191c2f",
+      "title": "Dungeon Odyssey 41191C2F",
+      "url": "https://asuracomic.net/series/dungeon-odyssey-41191c2f",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 121,
+      "manga_id": "im-gonna-annihilate-this-land-4d9f3fd9",
+      "title": "Im Gonna Annihilate This Land 4D9F3Fd9",
+      "url": "https://asuracomic.net/series/im-gonna-annihilate-this-land-4d9f3fd9",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 122,
+      "manga_id": "heavenly-grand-archives-young-master-fb3bd397",
+      "title": "Heavenly Grand Archives Young Master Fb3Bd397",
+      "url": "https://asuracomic.net/series/heavenly-grand-archives-young-master-fb3bd397",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    },
+    {
+      "id": 123,
+      "manga_id": "the-world-after-the-end-1e8b7c6d",
+      "title": "The World After The End 1E8B7C6D",
+      "url": "https://asuracomic.net/series/the-world-after-the-end-1e8b7c6d",
+      "completed": false,
+      "processed_at": null,
+      "video_path": null,
+      "notes": ""
+    }
+  ]
+}
