@@ -190,7 +190,7 @@ class ComicPipeline:
                           extract_dpi: int = 150,
                           video_voice: str = "af_bella",
                           video_batch_size: int = 3,
-                          video_resolution: tuple = (1080x1920),
+                          video_resolution: tuple = (1080, 1920),
                           base_output_dir: str = "comic_output"):
         """
         Run complete pipeline: PDF → Analysis → Story → Video
