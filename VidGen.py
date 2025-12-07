@@ -1,6 +1,6 @@
 """
-Memory-Efficient Video Generator with Kokoro TTS
-Uses Kokoro open-weight TTS model for high-quality audio narration
+Memory-Efficient Video Generator with Kokoro TTS - OPTIMIZED WITH THREADING
+Uses concurrent.futures for parallel processing of audio generation and video segments
 """
 
 import json
@@ -12,6 +12,9 @@ import shutil
 import soundfile as sf
 import torch
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+from typing import List, Dict, Tuple
+import time
 
 # Handle both old and new moviepy import structures
 try:
@@ -26,9 +29,10 @@ except ImportError:
 
 class KokoroTTSVideoGenerator:
     def __init__(self, json_path, base_panels_folder, output_path="output_video.mp4", 
-                 include_audio=True, batch_size=12, voice='af_heart', lang_code='a'):
+                 include_audio=True, batch_size=12, voice='af_heart', lang_code='a',
+                 max_workers=4):
         """
-        Initialize the video generator with Kokoro TTS
+        Initialize the video generator with Kokoro TTS and threading support
         
         Args:
             json_path: Path to panel_to_story_mapping.json
@@ -36,8 +40,9 @@ class KokoroTTSVideoGenerator:
             output_path: Path for output video file
             include_audio: Whether to include audio narration
             batch_size: Number of segments to process before creating intermediate video
-            voice: Kokoro voice to use (af_heart, af_sky, af_bella, am_adam, am_michael, bf_emma, bf_isabella, bm_george, bm_lewis)
+            voice: Kokoro voice to use
             lang_code: Language code ('a' for American English, 'b' for British English)
+            max_workers: Number of parallel workers for threading (default: 4)
         """
         self.json_path = json_path
         self.base_panels_folder = Path(base_panels_folder)
@@ -52,22 +57,14 @@ class KokoroTTSVideoGenerator:
         self.voice = voice
         self.lang_code = lang_code
         self.sample_rate = 24000
+        self.max_workers = max_workers
         
-        # Kokoro has a limit on text length (~500 chars recommended for best quality)
-        # We'll split longer texts into chunks
         self.max_chars_per_chunk = 400
-
-        # Available voices for reference
-        self.available_voices = {
-            'af': ['af_heart', 'af_sky', 'af_bella'],  # American Female
-            'am': ['am_adam', 'am_michael'],           # American Male
-            'bf': ['bf_emma', 'bf_isabella'],          # British Female
-            'bm': ['bm_george', 'bm_lewis']            # British Male
-        }
 
         # Initialize Kokoro pipeline
         if self.include_audio:
             print(f"🎙️  Loading Kokoro TTS (voice: {voice}, lang: {lang_code})...")
+            print(f"🧵 Threading enabled with {max_workers} workers")
             try:
                 from kokoro import KPipeline
                 self.pipeline = KPipeline(lang_code=lang_code)
@@ -95,10 +92,7 @@ class KokoroTTSVideoGenerator:
             raise KeyError("'story_segments' not found in JSON")
 
     def split_text_into_chunks(self, text):
-        """
-        Split text into chunks that fit Kokoro's optimal length
-        Tries to split at sentence boundaries
-        """
+        """Split text into chunks that fit Kokoro's optimal length"""
         if len(text) <= self.max_chars_per_chunk:
             return [text]
         
@@ -111,41 +105,26 @@ class KokoroTTSVideoGenerator:
             if not sentence:
                 continue
                 
-            # Add period back
             sentence = sentence + '.'
             
-            # Check if adding this sentence would exceed limit
             if len(current_chunk) + len(sentence) <= self.max_chars_per_chunk:
                 current_chunk += " " + sentence if current_chunk else sentence
             else:
-                # Save current chunk and start new one
                 if current_chunk:
                     chunks.append(current_chunk.strip())
                 current_chunk = sentence
         
-        # Add the last chunk
         if current_chunk:
             chunks.append(current_chunk.strip())
         
         return chunks
 
     def generate_audio_kokoro(self, text, output_path):
-        """
-        Generate audio from text using Kokoro TTS
-        Handles text splitting for longer passages
-        
-        Args:
-            text: Text to convert to speech
-            output_path: Path to save audio file
-            
-        Returns:
-            Path to generated audio file or None if audio disabled
-        """
+        """Generate audio from text using Kokoro TTS"""
         if not self.include_audio or self.pipeline is None:
             return None
 
         try:
-            # Split text into manageable chunks
             text_chunks = self.split_text_into_chunks(text)
             
             if len(text_chunks) > 1:
@@ -155,22 +134,16 @@ class KokoroTTSVideoGenerator:
             
             audio_chunks = []
             
-            # Generate audio for each chunk
             for i, chunk in enumerate(text_chunks):
-                # Generate audio using Kokoro
                 generator = self.pipeline(chunk, voice=self.voice)
-                
-                # Kokoro yields multiple segments, we need to concatenate them
                 chunk_audio_segments = []
                 for _, _, audio in generator:
                     chunk_audio_segments.append(audio)
                 
-                # Concatenate all segments for this chunk
                 if chunk_audio_segments:
                     chunk_audio = np.concatenate(chunk_audio_segments)
                     audio_chunks.append(chunk_audio)
             
-            # Concatenate all chunks with small pause between them (0.3 seconds)
             if audio_chunks:
                 pause_samples = int(0.3 * self.sample_rate)
                 pause = np.zeros(pause_samples)
@@ -178,12 +151,10 @@ class KokoroTTSVideoGenerator:
                 final_audio_parts = []
                 for i, chunk_audio in enumerate(audio_chunks):
                     final_audio_parts.append(chunk_audio)
-                    if i < len(audio_chunks) - 1:  # Don't add pause after last chunk
+                    if i < len(audio_chunks) - 1:
                         final_audio_parts.append(pause)
                 
                 final_audio = np.concatenate(final_audio_parts)
-                
-                # Save to file
                 sf.write(output_path, final_audio, self.sample_rate)
                 print("✓")
                 return output_path
@@ -194,6 +165,51 @@ class KokoroTTSVideoGenerator:
         except Exception as e:
             print(f"❌ Error generating audio: {e}")
             return None
+
+    def generate_audio_parallel(self, segments: List[Dict]) -> Dict[int, str]:
+        """
+        Generate audio for multiple segments in parallel using ThreadPoolExecutor
+        
+        Args:
+            segments: List of segment dictionaries
+            
+        Returns:
+            Dictionary mapping segment_id to audio file path
+        """
+        audio_paths = {}
+        
+        if not self.include_audio:
+            return audio_paths
+        
+        print(f"\n🎵 Generating audio for {len(segments)} segments in parallel...")
+        start_time = time.time()
+        
+        def generate_single_audio(segment):
+            segment_id = segment['segment_id']
+            story_text = segment['story_paragraph']
+            audio_path = os.path.join(self.temp_dir, f"segment_{segment_id}.wav")
+            
+            audio_file = self.generate_audio_kokoro(story_text, audio_path)
+            return segment_id, audio_file
+        
+        # Use ThreadPoolExecutor for I/O-bound audio generation
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {executor.submit(generate_single_audio, seg): seg for seg in segments}
+            
+            for future in as_completed(futures):
+                try:
+                    segment_id, audio_file = future.result()
+                    if audio_file:
+                        audio_paths[segment_id] = audio_file
+                except Exception as e:
+                    segment = futures[future]
+                    print(f"  ❌ Error generating audio for segment {segment['segment_id']}: {e}")
+        
+        elapsed = time.time() - start_time
+        print(f"✓ Generated {len(audio_paths)} audio files in {elapsed:.2f}s "
+              f"({elapsed/len(segments):.2f}s per segment)")
+        
+        return audio_paths
 
     def find_panel_path(self, page_number, panel_id):
         """Find the correct panel file path"""
@@ -210,7 +226,6 @@ class KokoroTTSVideoGenerator:
             if panel_path.exists():
                 return panel_path
 
-        # Search parent folder as fallback
         for name in possible_names:
             panel_path = self.base_panels_folder / name
             if panel_path.exists():
@@ -233,43 +248,37 @@ class KokoroTTSVideoGenerator:
         clip = ImageClip(str(panel_path)).set_duration(duration)
         return clip
 
-    def create_segment_video(self, segment):
-        """Create video for a single story segment with Kokoro TTS"""
+    def create_segment_video(self, segment, audio_path=None):
+        """
+        Create video for a single story segment
+        
+        Args:
+            segment: Segment dictionary
+            audio_path: Pre-generated audio file path (if available)
+        """
         segment_id = segment['segment_id']
-        story_text = segment['story_paragraph']
         panels = segment['panels']
         page_number = segment['page_number']
 
-        # Handle both old and new JSON formats
         if panels and isinstance(panels[0], int):
             panels = [{'page': page_number, 'panel_id': pid, 'reading_order': i+1}
                      for i, pid in enumerate(panels)]
 
-        # Calculate durations
-        if not self.include_audio:
-            panel_duration = 3.0
-            total_duration = panel_duration * max(len(panels), 1)
-            audio_clip = None
-        else:
-            audio_path = os.path.join(self.temp_dir, f"segment_{segment_id}.wav")
-            audio_file = self.generate_audio_kokoro(story_text, audio_path)
-            
-            if audio_file and os.path.exists(audio_file):
-                try:
-                    audio_clip = AudioFileClip(audio_file)
-                    total_duration = audio_clip.duration
-                    panel_duration = total_duration / max(len(panels), 1)
-                except Exception as e:
-                    print(f"  ⚠️  Error loading audio: {e}, using silent video")
-                    panel_duration = 3.0
-                    total_duration = panel_duration * max(len(panels), 1)
-                    audio_clip = None
-            else:
-                # Fallback to silent video if audio generation fails
-                print("  ⚠️  Using silent video for this segment")
+        # Load audio if available
+        audio_clip = None
+        if audio_path and os.path.exists(audio_path):
+            try:
+                audio_clip = AudioFileClip(audio_path)
+                total_duration = audio_clip.duration
+                panel_duration = total_duration / max(len(panels), 1)
+            except Exception as e:
+                print(f"  ⚠️  Error loading audio: {e}, using silent video")
                 panel_duration = 3.0
                 total_duration = panel_duration * max(len(panels), 1)
                 audio_clip = None
+        else:
+            panel_duration = 3.0
+            total_duration = panel_duration * max(len(panels), 1)
 
         # Handle empty panels
         if not panels or len(panels) == 0:
@@ -309,58 +318,94 @@ class KokoroTTSVideoGenerator:
         # Concatenate panels
         video_clip = concatenate_videoclips(panel_clips, method="compose")
 
-        # Add audio (must be added AFTER concatenation to avoid None references)
+        # Add audio
         if audio_clip:
             try:
                 video_clip = video_clip.set_audio(audio_clip)
             except Exception as e:
                 print(f"  ⚠️  Error setting audio: {e}")
 
-        # Clean up panel clips (but NOT the audio clip yet - it's still referenced)
+        # Clean up panel clips
         for clip in panel_clips:
             clip.close()
 
         return video_clip
 
+    def create_segment_videos_parallel(self, segments: List[Dict], audio_paths: Dict[int, str]) -> List[Tuple[int, any]]:
+        """
+        Create video clips for multiple segments in parallel
+        
+        Args:
+            segments: List of segment dictionaries
+            audio_paths: Dictionary mapping segment_id to audio file path
+            
+        Returns:
+            List of tuples (segment_id, video_clip)
+        """
+        print(f"\n🎬 Creating video clips for {len(segments)} segments in parallel...")
+        start_time = time.time()
+        
+        segment_videos = []
+        
+        def create_single_video(segment):
+            segment_id = segment['segment_id']
+            audio_path = audio_paths.get(segment_id)
+            
+            try:
+                clip = self.create_segment_video(segment, audio_path)
+                return segment_id, clip, None
+            except Exception as e:
+                return segment_id, None, str(e)
+        
+        # Use ThreadPoolExecutor for video clip creation (I/O bound)
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {executor.submit(create_single_video, seg): seg for seg in segments}
+            
+            for future in as_completed(futures):
+                try:
+                    segment_id, clip, error = future.result()
+                    if clip is not None:
+                        segment_videos.append((segment_id, clip))
+                    elif error:
+                        print(f"  ❌ Error creating video for segment {segment_id}: {error}")
+                except Exception as e:
+                    segment = futures[future]
+                    print(f"  ❌ Exception for segment {segment['segment_id']}: {e}")
+        
+        # Sort by segment_id to maintain order
+        segment_videos.sort(key=lambda x: x[0])
+        
+        elapsed = time.time() - start_time
+        print(f"✓ Created {len(segment_videos)} video clips in {elapsed:.2f}s "
+              f"({elapsed/len(segments):.2f}s per segment)")
+        
+        return segment_videos
+
     def process_batch(self, segments, batch_num, resolution=(1280, 720)):
-        """Process a batch of segments and save as intermediate video"""
+        """Process a batch of segments with parallel audio and video generation"""
         print(f"\n{'='*70}")
-        print(f"PROCESSING BATCH {batch_num}")
+        print(f"PROCESSING BATCH {batch_num} (PARALLEL MODE)")
         print(f"Segments: {len(segments)}")
         print(f"{'='*70}")
 
-        segment_clips = []
-        skipped = 0
+        # Step 1: Generate all audio files in parallel
+        audio_paths = self.generate_audio_parallel(segments)
 
-        for i, segment in enumerate(segments, 1):
-            segment_id = segment['segment_id']
-            print(f"  [{i}/{len(segments)}] Segment {segment_id}...", end=" ")
-            
-            try:
-                clip = self.create_segment_video(segment)
-                if clip is not None:
-                    segment_clips.append(clip)
-                    print("✓")
-                else:
-                    skipped += 1
-                    print("⚠ Skipped")
-            except Exception as e:
-                print(f"✗ Error: {e}")
-                import traceback
-                traceback.print_exc()
-                skipped += 1
-                continue
+        # Step 2: Create all video clips in parallel
+        segment_videos = self.create_segment_videos_parallel(segments, audio_paths)
 
-        if not segment_clips:
+        if not segment_videos:
             print(f"  ⚠ No valid segments in batch {batch_num}")
             return None
+
+        # Extract just the clips
+        segment_clips = [clip for _, clip in segment_videos]
 
         print(f"\n  Combining {len(segment_clips)} segments...")
         try:
             batch_video = concatenate_videoclips(segment_clips, method="compose")
         except Exception as e:
             print(f"  ✗ Error concatenating clips: {e}")
-            # Clean up before raising
             for clip in segment_clips:
                 try:
                     clip.close()
@@ -385,8 +430,8 @@ class KokoroTTSVideoGenerator:
                 remove_temp=True,
                 preset='medium',
                 threads=4,
-                verbose=False,  # Reduce log verbosity for GitHub Actions
-                logger=None     # Disable progress bar for cleaner logs
+                verbose=False,
+                logger=None
             )
         except Exception as e:
             print(f"  ✗ Error writing video: {e}")
@@ -394,7 +439,6 @@ class KokoroTTSVideoGenerator:
             traceback.print_exc()
             raise
         finally:
-            # Clean up - close video and all segment clips
             try:
                 batch_video.close()
             except:
@@ -440,10 +484,8 @@ class KokoroTTSVideoGenerator:
             logger=None
         )
 
-        # Get duration before closing
         duration = final_video.duration
 
-        # Clean up
         final_video.close()
         for clip in batch_clips:
             clip.close()
@@ -455,9 +497,9 @@ class KokoroTTSVideoGenerator:
         print(f"     Duration: {duration:.1f}s")
 
     def generate_video(self, fps=24, resolution=(1280, 720)):
-        """Generate the complete video with Kokoro TTS"""
+        """Generate the complete video with parallel processing"""
         print("\n" + "="*70)
-        print("VIDEO GENERATION WITH KOKORO TTS")
+        print("VIDEO GENERATION WITH KOKORO TTS (PARALLEL MODE)")
         print("="*70)
         print(f"JSON: {self.json_path}")
         print(f"Base panels folder: {self.base_panels_folder}")
@@ -467,6 +509,7 @@ class KokoroTTSVideoGenerator:
         print(f"Language: {self.lang_code}")
         print(f"Resolution: {resolution[0]}x{resolution[1]}")
         print(f"Batch size: {self.batch_size}")
+        print(f"Parallel workers: {self.max_workers}")
         print("="*70)
 
         segments = self.data['story_segments']
@@ -475,8 +518,8 @@ class KokoroTTSVideoGenerator:
 
         print(f"\nProcessing {total_segments} segments in {num_batches} batches...")
 
-        # Process segments in batches
         batch_paths = []
+        overall_start = time.time()
 
         for batch_num in range(num_batches):
             start_idx = batch_num * self.batch_size
@@ -504,6 +547,8 @@ class KokoroTTSVideoGenerator:
         else:
             self.merge_batch_videos(batch_paths, self.output_path)
 
+        total_time = time.time() - overall_start
+
         # Final summary
         print(f"\n{'='*70}")
         print(f"✓ VIDEO CREATED SUCCESSFULLY!")
@@ -513,6 +558,8 @@ class KokoroTTSVideoGenerator:
         print(f"Batches processed: {len(batch_paths)}")
         print(f"TTS Model: Kokoro (82M parameters)")
         print(f"Voice: {self.voice}")
+        print(f"Total time: {total_time/60:.2f} minutes ({total_time/total_segments:.2f}s per segment)")
+        print(f"Parallel workers: {self.max_workers}")
         print(f"{'='*70}")
 
     def cleanup(self):
@@ -521,7 +568,6 @@ class KokoroTTSVideoGenerator:
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
         
-        # Also clear CUDA cache if using GPU
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         
