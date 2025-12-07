@@ -16,7 +16,7 @@ from datetime import datetime
 # Import enhanced key manager
 from enhanced_api_key_manager import APIKeyManager, ManagedGroqClient
 from character_tracker import CharacterTracker, CharacterGuide
-from analyzer_with_key_manager import CharacterAwareComicAnalyzer, PageAnalysis
+from integrated_analyzer_with_key_manager import CharacterAwareComicAnalyzer, PageAnalysis
 
 @dataclass
 class ComicBookAnalysis:
