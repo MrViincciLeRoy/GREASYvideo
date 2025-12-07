@@ -1,23 +1,20 @@
 # Core dependencies
 groq>=0.9.0
 PyMuPDF>=1.23.0
-opencv-python>=4.8.0
+opencv-python-headless>=4.8.0
 pillow>=10.0.0
 pytesseract>=0.3.10
 numpy>=1.24.0
 tqdm>=4.66.0
-moviepy 
-#gtts 
-#pillow 
-#groq 
-pdf2image 
-#pytesseract 
-#PyMuPDF
-# Video generation
-moviepy>=1.0.3
+
+# Video generation - FIXED: Use specific compatible versions
+moviepy==1.0.3
+imageio==2.31.1
+imageio-ffmpeg>=0.4.8
 soundfile>=0.12.1
 torch>=2.0.0
-kokoro>=0.9.2
+kokoro-onnx>=0.9.2
+decorator>=4.4.2
 
 # Optional but recommended
 huggingface-hub>=0.19.0
