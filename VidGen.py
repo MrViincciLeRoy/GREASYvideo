@@ -1,4 +1,3 @@
-
 """
 Memory-Efficient Video Generator with Kokoro TTS
 Uses Kokoro open-weight TTS model for high-quality audio narration
@@ -8,12 +7,22 @@ import json
 import os
 import gc
 from pathlib import Path
-from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, VideoFileClip, concatenate_audioclips
 import tempfile
 import shutil
 import soundfile as sf
 import torch
 import numpy as np
+
+# Handle both old and new moviepy import structures
+try:
+    from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, VideoFileClip
+except ImportError:
+    try:
+        from moviepy import ImageClip, concatenate_videoclips, AudioFileClip, VideoFileClip
+    except ImportError:
+        raise ImportError(
+            "MoviePy import failed. Please install: pip install moviepy==1.0.3 imageio==2.31.1"
+        )
 
 class KokoroTTSVideoGenerator:
     def __init__(self, json_path, base_panels_folder, output_path="output_video.mp4", 
@@ -59,9 +68,15 @@ class KokoroTTSVideoGenerator:
         # Initialize Kokoro pipeline
         if self.include_audio:
             print(f"🎙️  Loading Kokoro TTS (voice: {voice}, lang: {lang_code})...")
-            from kokoro import KPipeline
-            self.pipeline = KPipeline(lang_code=lang_code)
-            print("✓ Kokoro TTS loaded successfully!")
+            try:
+                from kokoro import KPipeline
+                self.pipeline = KPipeline(lang_code=lang_code)
+                print("✓ Kokoro TTS loaded successfully!")
+            except Exception as e:
+                print(f"⚠️  Warning: Could not load Kokoro TTS: {e}")
+                print("    Falling back to silent video mode")
+                self.include_audio = False
+                self.pipeline = None
         else:
             self.pipeline = None
 
@@ -370,8 +385,8 @@ class KokoroTTSVideoGenerator:
                 remove_temp=True,
                 preset='medium',
                 threads=4,
-                verbose=True,  # Show progress bars
-                logger='bar'   # Use progress bar logger
+                verbose=False,  # Reduce log verbosity for GitHub Actions
+                logger=None     # Disable progress bar for cleaner logs
             )
         except Exception as e:
             print(f"  ✗ Error writing video: {e}")
@@ -421,9 +436,12 @@ class KokoroTTSVideoGenerator:
             remove_temp=True,
             preset='medium',
             threads=4,
-            verbose=True,  # Show progress bars
-            logger='bar'   # Use progress bar logger
+            verbose=False,
+            logger=None
         )
+
+        # Get duration before closing
+        duration = final_video.duration
 
         # Clean up
         final_video.close()
@@ -434,7 +452,7 @@ class KokoroTTSVideoGenerator:
 
         print(f"\n  ✓ Final video complete!")
         print(f"     Location: {output_path}")
-        print(f"     Duration: {final_video.duration:.1f}s")
+        print(f"     Duration: {duration:.1f}s")
 
     def generate_video(self, fps=24, resolution=(1280, 720)):
         """Generate the complete video with Kokoro TTS"""
@@ -508,76 +526,3 @@ class KokoroTTSVideoGenerator:
             torch.cuda.empty_cache()
         
         print(f"✓ Cleanup complete")
-
-
-# ============================================================================
-# USAGE EXAMPLE
-# ============================================================================
-
-if __name__ == "__main__":
-    # INSTALL DEPENDENCIES FIRST (run in Colab cell):
-    # !pip install -q kokoro>=0.9.2 soundfile
-    # !apt-get -qq -y install espeak-ng > /dev/null 2>&1
-    
-    JSON_PATH = "/content/story_output/panel_to_story_mapping.json"
-    BASE_PANELS_FOLDER = "/content/knight_king_analysis"
-    OUTPUT_VIDEO = "/content/knight_king_video_kokoro.mp4"
-    
-    print("""
-╔══════════════════════════════════════════════════════════════╗
-║     VIDEO GENERATOR WITH KOKORO TTS (OPEN-WEIGHT)           ║
-║                                                              ║
-║  ✓ Free & open-source TTS (82M parameters)                  ║
-║  ✓ No API limits or quota restrictions                      ║
-║  ✓ Multiple voices (American/British, Male/Female)          ║
-║  ✓ Automatic text chunking for long passages                ║
-║  ✓ Memory-efficient batch processing                        ║
-╚══════════════════════════════════════════════════════════════╝
-""")
-    
-    # Available voices:
-    # American Female: af_heart, af_sky, af_bella
-    # American Male: am_adam, am_michael
-    # British Female: bf_emma, bf_isabella
-    # British Male: bm_george, bm_lewis
-    
-    VOICE = "af_bella"  # Choose your preferred voice
-    LANG_CODE = "a"     # 'a' for American English, 'b' for British English
-    BATCH_SIZE = 3    # Adjust based on RAM (6-24)
-    
-    generator = KokoroTTSVideoGenerator(
-        json_path=JSON_PATH,
-        base_panels_folder=BASE_PANELS_FOLDER,
-        output_path=OUTPUT_VIDEO,
-        include_audio=True,
-        batch_size=BATCH_SIZE,
-        voice=VOICE,
-        lang_code=LANG_CODE
-    )
-    
-    try:
-        # Generate video with Kokoro TTS
-        generator.generate_video(fps=24, resolution=(720, 1280))
-    finally:
-        # Always cleanup
-        generator.cleanup()
-    
-    print("""
-╔══════════════════════════════════════════════════════════════╗
-║                    GENERATION COMPLETE!                      ║
-╚══════════════════════════════════════════════════════════════╝
-
-📝 NOTES:
-  • Kokoro is completely free with no API limits
-  • Text is automatically split into optimal chunks
-  • 82M parameter model delivers high quality
-  • Apache-licensed for any use case
-  • Multiple voice options available
-  • Adjust BATCH_SIZE if running out of RAM
-
-🎙️ VOICE OPTIONS:
-  Female American: af_heart (warm), af_sky (clear), af_bella (expressive)
-  Male American: am_adam (deep), am_michael (smooth)
-  Female British: bf_emma (elegant), bf_isabella (refined)
-  Male British: bm_george (authoritative), bm_lewis (professional)
-""")
