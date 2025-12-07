@@ -69,21 +69,21 @@ jobs:
         # Show database stats
         echo ""
         echo "📊 Database Statistics:"
-        python3 << EOF
+        python3 -c "
 import json
 with open('$DATABASE_FILE', 'r') as f:
     db = json.load(f)
     meta = db['metadata']
-    print(f"  Total manga: {meta['total_manga']}")
-    print(f"  Completed: {meta['completed_count']}")
-    print(f"  Pending: {meta['pending_count']}")
-    print(f"  Last page scraped: {meta['last_page_scraped']}")
-    print(f"  Created: {meta['created_at']}")
-    print("")
-    print("📚 First 5 manga:")
+    print(f\"  Total manga: {meta['total_manga']}\")
+    print(f\"  Completed: {meta['completed_count']}\")
+    print(f\"  Pending: {meta['pending_count']}\")
+    print(f\"  Last page scraped: {meta['last_page_scraped']}\")
+    print(f\"  Created: {meta['created_at']}\")
+    print(\"\")
+    print(\"📚 First 5 manga:\")
     for manga in db['manga'][:5]:
-        print(f"  {manga['id']}. {manga['title']}")
-EOF
+        print(f\"  {manga['id']}. {manga['title']}\")
+"
     
     - name: Move database to data folder
       run: |
@@ -145,27 +145,27 @@ EOF
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Add stats from database
-          python3 << 'EOF' >> $GITHUB_STEP_SUMMARY
+          python3 -c "
 import json
 with open('data/${{ env.DATABASE_FILE }}', 'r') as f:
     db = json.load(f)
     meta = db['metadata']
-    print("## Statistics")
-    print("")
-    print(f"| Metric | Value |")
-    print(f"|--------|-------|")
-    print(f"| Total Manga | {meta['total_manga']:,} |")
-    print(f"| Completed | {meta['completed_count']} |")
-    print(f"| Pending | {meta['pending_count']:,} |")
-    print(f"| Last Page | {meta['last_page_scraped']} |")
-    print("")
-    print("## Sample Entries (First 10)")
-    print("")
+    print('## Statistics')
+    print('')
+    print('| Metric | Value |')
+    print('|--------|-------|')
+    print(f\"| Total Manga | {meta['total_manga']:,} |\")
+    print(f\"| Completed | {meta['completed_count']} |\")
+    print(f\"| Pending | {meta['pending_count']:,} |\")
+    print(f\"| Last Page | {meta['last_page_scraped']} |\")
+    print('')
+    print('## Sample Entries (First 10)')
+    print('')
     for manga in db['manga'][:10]:
-        print(f"{manga['id']}. **{manga['title']}**")
-        print(f"   - URL: {manga['url']}")
-        print("")
-EOF
+        print(f\"{manga['id']}. **{manga['title']}**\")
+        print(f\"   - URL: {manga['url']}\")
+        print('')
+" >> $GITHUB_STEP_SUMMARY
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
@@ -178,7 +178,7 @@ EOF
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "1. Use the **Download & Convert Manga to Video** workflow" >> $GITHUB_STEP_SUMMARY
           echo "2. Set \`database_file\` to: \`${{ env.DATABASE_FILE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "3. Choose a manga index (1-${meta['total_manga']})" >> $GITHUB_STEP_SUMMARY
+          echo "3. Choose a manga index (1-\${meta['total_manga']})" >> $GITHUB_STEP_SUMMARY
           echo "4. Select chapter range to process" >> $GITHUB_STEP_SUMMARY
         else
           echo "## ❌ Database Creation Failed" >> $GITHUB_STEP_SUMMARY
