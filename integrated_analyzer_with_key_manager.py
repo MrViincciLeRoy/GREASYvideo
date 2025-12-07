@@ -15,7 +15,7 @@ from datetime import datetime
 from enhanced_api_key_manager import APIKeyManager, ManagedGroqClient
 from character_tracker import CharacterTracker, CharacterGuide
 # Assume PanelDetector is available
-from panel_detector import PanelDetect
+from panel_detector import PanelDetector 
 @dataclass
 class PanelAnalysis:
     """Enhanced panel analysis with character tracking"""
