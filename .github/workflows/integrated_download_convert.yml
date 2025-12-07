@@ -1,0 +1,233 @@
+name: Download & Convert Manga to Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_file:
+        description: 'Database filename (in data/ folder)'
+        required: true
+        default: 'manga_database_20251207_061922.json'
+      manga_index:
+        description: 'Which manga to process (1-based index)'
+        required: true
+        default: '1'
+      start_chapter:
+        description: 'Starting chapter number'
+        required: true
+        default: '1'
+      end_chapter:
+        description: 'Ending chapter number'
+        required: true
+        default: '5'
+      start_page:
+        description: 'Start page within PDF'
+        required: false
+        default: '2'
+      end_page:
+        description: 'End page within PDF (empty for all)'
+        required: false
+        default: ''
+      voice:
+        description: 'TTS voice'
+        required: false
+        default: 'af_bella'
+      batch_size:
+        description: 'Video batch size'
+        required: false
+        default: '4'
+
+jobs:
+  download-and-convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 600  # 10 hours max
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          tesseract-ocr \
+          espeak-ng \
+          ffmpeg \
+          libsm6 \
+          libxext6 \
+          libxrender-dev \
+          libgomp1 \
+          chromium-browser \
+          chromium-chromedriver \
+          zip
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install moviepy==1.0.3 imageio==2.31.1 imageio-ffmpeg
+        pip install playwright
+        playwright install chromium
+        playwright install-deps
+        pip install -r requirements.txt
+        
+        # Verify
+        python -c "from moviepy.editor import ImageClip; print('✓ MoviePy')"
+        python -c "import cv2; print('✓ OpenCV')"
+        python -c "import pytesseract; print('✓ Tesseract')"
+    
+    - name: Download Manga
+      run: |
+        python integrated_downloader.py \
+          --database "data/${{ github.event.inputs.database_file }}" \
+          --manga-index ${{ github.event.inputs.manga_index }} \
+          --start-chapter ${{ github.event.inputs.start_chapter }} \
+          --end-chapter ${{ github.event.inputs.end_chapter }}
+    
+    - name: Find Downloaded PDFs
+      id: find_pdfs
+      run: |
+        # Find all PDFs in downloaded_manga folder
+        if [ ! -d "downloaded_manga" ]; then
+          echo "❌ No downloaded_manga folder found!"
+          exit 1
+        fi
+        
+        PDF_COUNT=$(find downloaded_manga -name "*.pdf" -type f | wc -l)
+        echo "✓ Found $PDF_COUNT PDF files"
+        echo "PDF_COUNT=$PDF_COUNT" >> $GITHUB_ENV
+        
+        # Get first PDF for summary
+        FIRST_PDF=$(find downloaded_manga -name "*.pdf" -type f | head -n 1)
+        echo "FIRST_PDF=$FIRST_PDF" >> $GITHUB_ENV
+    
+    - name: Convert PDFs to Videos
+      env:
+        GROQ_KEY: ${{ secrets.GROQ_KEY }}
+        GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
+        GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
+        GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
+      run: |
+        # Process each PDF
+        find downloaded_manga -name "*.pdf" -type f | while read PDF_FILE; do
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Processing: $PDF_FILE"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Set end page parameter
+          END_PAGE_ARG=""
+          if [ ! -z "${{ github.event.inputs.end_page }}" ]; then
+            END_PAGE_ARG="--end-page ${{ github.event.inputs.end_page }}"
+          fi
+          
+          # Run pipeline
+          python master_comic_pipeline.py "$PDF_FILE" \
+            --start-page ${{ github.event.inputs.start_page }} \
+            $END_PAGE_ARG \
+            --voice ${{ github.event.inputs.voice }} \
+            --batch-size ${{ github.event.inputs.batch_size }} \
+            --format auto \
+            --dpi 150 \
+            --output-dir comic_output
+          
+          echo "✓ Completed: $PDF_FILE"
+          echo ""
+        done
+    
+    - name: Organize Outputs
+      run: |
+        echo "📁 Organizing outputs..."
+        
+        # Create final output structure
+        mkdir -p final_output/videos
+        mkdir -p final_output/pdfs
+        mkdir -p final_output/analysis
+        
+        # Move videos
+        find comic_output -name "*.mp4" -type f -exec cp {} final_output/videos/ \;
+        
+        # Move PDFs
+        find downloaded_manga -name "*.pdf" -type f -exec cp {} final_output/pdfs/ \;
+        
+        # Move analysis files
+        find comic_output -name "complete_analysis.json" -exec cp {} final_output/analysis/ \;
+        find comic_output -name "story_complete.json" -exec cp {} final_output/analysis/ \;
+        
+        echo "✓ Organization complete"
+        
+        # Show structure
+        echo ""
+        echo "📊 Final Output:"
+        du -sh final_output/*
+        
+        VIDEO_COUNT=$(find final_output/videos -name "*.mp4" -type f | wc -l)
+        echo "VIDEO_COUNT=$VIDEO_COUNT" >> $GITHUB_ENV
+    
+    - name: Update Database
+      run: |
+        python update_database.py \
+          --database "data/${{ github.event.inputs.database_file }}" \
+          --manga-index ${{ github.event.inputs.manga_index }} \
+          --completed \
+          --video-path "final_output/videos" \
+          --notes "Processed chapters ${{ github.event.inputs.start_chapter }}-${{ github.event.inputs.end_chapter }}"
+    
+    - name: Commit Updated Database
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add "data/${{ github.event.inputs.database_file }}"
+        git commit -m "Update database: Manga #${{ github.event.inputs.manga_index }} completed" || echo "No changes"
+        git push || echo "Nothing to push"
+    
+    - name: Upload Videos
+      uses: actions/upload-artifact@v4
+      with:
+        name: manga-videos
+        path: final_output/videos/*.mp4
+        retention-days: 30
+    
+    - name: Upload PDFs
+      uses: actions/upload-artifact@v4
+      with:
+        name: manga-pdfs
+        path: final_output/pdfs/*.pdf
+        retention-days: 30
+    
+    - name: Upload Analysis
+      uses: actions/upload-artifact@v4
+      with:
+        name: manga-analysis
+        path: final_output/analysis/*.json
+        retention-days: 30
+    
+    - name: Generate Summary
+      if: always()
+      run: |
+        echo "# 🎬 Download & Convert Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Input" >> $GITHUB_STEP_SUMMARY
+        echo "- **Database:** ${{ github.event.inputs.database_file }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Manga Index:** #${{ github.event.inputs.manga_index }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Chapters:** ${{ github.event.inputs.start_chapter }}-${{ github.event.inputs.end_chapter }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Pages:** ${{ github.event.inputs.start_page }}-${{ github.event.inputs.end_page || 'all' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Results" >> $GITHUB_STEP_SUMMARY
+        echo "- **PDFs Downloaded:** ${{ env.PDF_COUNT }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Videos Generated:** ${{ env.VIDEO_COUNT }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📥 Download artifacts above to access files." >> $GITHUB_STEP_SUMMARY
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        # Remove large temporary files
+        rm -rf comic_output/*/extracted_pages
+        find comic_output -name "*.png" -size +5M -delete
+        rm -rf downloaded_manga
