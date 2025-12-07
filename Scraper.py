@@ -54,7 +54,15 @@ async def scrape_asura_manga(start_page=1, max_links=2000):
             
             while len(all_links) < max_links:
                 print(f"Scraping page {current_page}...")
-                await asyncio.sleep(2)
+                
+                # Wait for content to load - increased wait time
+                await asyncio.sleep(5)
+                
+                # Wait for the grid/content to be visible
+                try:
+                    await page.wait_for_selector('.grid, .series-list, a[href*="/series/"]', timeout=10000)
+                except:
+                    print(f"  ⚠ Timeout waiting for content")
                 
                 # Extract manga links
                 links = await page.evaluate('''() => {
@@ -85,6 +93,12 @@ async def scrape_asura_manga(start_page=1, max_links=2000):
                 
                 print(f"  Found {new_count} new links (Total: {len(all_links)})")
                 
+                # If no new links found, wait a bit more and try again
+                if new_count == 0 and len(all_links) > 0:
+                    print(f"  ⚠ No new links, waiting 5s and retrying...")
+                    await asyncio.sleep(5)
+                    continue
+                
                 if len(all_links) >= max_links:
                     print(f"\n✓ Target reached: {len(all_links)} links collected")
                     break
@@ -97,8 +111,12 @@ async def scrape_asura_manga(start_page=1, max_links=2000):
                     next_button = await page.query_selector('nav a:last-child')
                 
                 if not next_button:
-                    print("\n✗ No more pages available")
-                    break
+                    print(f"  ⚠ Next button not found, waiting 3s and retrying...")
+                    await asyncio.sleep(3)
+                    next_button = await page.query_selector('a[rel="next"]')
+                    if not next_button:
+                        print("\n✗ No more pages available")
+                        break
                 
                 is_disabled = await page.evaluate('''(btn) => {
                     return btn.classList.contains('disabled') || 
@@ -111,9 +129,23 @@ async def scrape_asura_manga(start_page=1, max_links=2000):
                     break
                 
                 print(f"  Clicking next button...")
+                
+                # Scroll to button before clicking
+                await page.evaluate('(btn) => btn.scrollIntoView()', next_button)
+                await asyncio.sleep(1)
+                
+                # Click and wait for navigation
                 await next_button.click()
                 current_page += 1
-                await asyncio.sleep(3)
+                
+                # Wait longer for page to load after click
+                await asyncio.sleep(5)
+                
+                # Wait for URL to change or content to refresh
+                try:
+                    await page.wait_for_load_state('networkidle', timeout=10000)
+                except:
+                    print(f"  ⚠ Network not idle, continuing anyway...")
                 
         except Exception as e:
             print(f"\n✗ Error during scraping: {str(e)}")
