@@ -1,0 +1,173 @@
+name: Worker Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      chunk_id:
+        description: 'Chunk ID from orchestrator DB'
+        required: true
+      job_id:
+        description: 'Job ID from orchestrator DB'
+        required: true
+      chapter_files:
+        description: 'Comma-separated PDF filenames to process'
+        required: true
+      start_chapter:
+        description: 'First chapter number in this chunk'
+        required: true
+      end_chapter:
+        description: 'Last chapter number in this chunk'
+        required: true
+
+jobs:
+  process-chunk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        lfs: true
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: pip
+
+    - name: Install system deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tesseract-ocr espeak-ng ffmpeg libsm6 libxext6 libxrender-dev libgomp1
+
+    - name: Install Python deps
+      run: |
+        pip install moviepy==1.0.3 imageio==2.31.1 imageio-ffmpeg
+        pip install -r requirements.txt
+
+    - name: Mark chunk running
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        python - <<'EOF'
+        import os, requests, json
+        url = os.environ['SUPABASE_URL']
+        key = os.environ['SUPABASE_KEY']
+        h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        requests.patch(f"{url}/rest/v1/chunks",
+            headers=h, json={'status': 'running'},
+            params={'id': f"eq.${{ github.event.inputs.chunk_id }}"})
+        EOF
+
+    - name: Process chapters
+      env:
+        GROQ_KEY: ${{ secrets.GROQ_KEY }}
+        GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
+        GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
+        GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
+      run: |
+        CHAPTERS="${{ github.event.inputs.chapter_files }}"
+        CHUNK_ID="${{ github.event.inputs.chunk_id }}"
+        START="${{ github.event.inputs.start_chapter }}"
+        END="${{ github.event.inputs.end_chapter }}"
+
+        # Process each chapter PDF in this chunk
+        IFS=',' read -ra FILES <<< "$CHAPTERS"
+        for PDF in "${FILES[@]}"; do
+          PDF_PATH="data/${PDF}"
+          if [ ! -f "$PDF_PATH" ]; then
+            echo "⚠ Skipping missing: $PDF_PATH"
+            continue
+          fi
+          echo "Processing: $PDF_PATH"
+          python pipeline.py "$PDF_PATH" \
+            --start-page 1 \
+            --voice af_bella \
+            --batch-size 4 \
+            --format auto \
+            --dpi 150 \
+            --output-dir "chunk_output/$(basename $PDF .pdf)"
+        done
+
+    - name: Merge chapter videos into one chunk video
+      run: |
+        # Build concat list from all chapter outputs
+        find chunk_output -name "*.mp4" | sort > /tmp/mp4_list.txt
+        cat /tmp/mp4_list.txt
+
+        python - <<'EOF'
+        import subprocess, os
+
+        mp4s = open('/tmp/mp4_list.txt').read().strip().splitlines()
+        if not mp4s:
+            raise RuntimeError("No MP4s found in chunk_output")
+
+        concat_file = '/tmp/concat.txt'
+        with open(concat_file, 'w') as f:
+            for p in mp4s:
+                f.write(f"file '{os.path.abspath(p)}'\n")
+
+        out = 'chunk_final.mp4'
+        subprocess.run([
+            'ffmpeg', '-y', '-f', 'concat', '-safe', '0',
+            '-i', concat_file, '-c', 'copy', out
+        ], check=True)
+        print(f"✓ chunk_final.mp4 ({os.path.getsize(out)/1024/1024:.1f} MB)")
+        EOF
+
+    - name: Upload as GitHub Release asset
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG="chunk-${{ github.event.inputs.job_id }}-ch${{ github.event.inputs.start_chapter }}-${{ github.event.inputs.end_chapter }}"
+        FILENAME="chunk_ch${{ github.event.inputs.start_chapter }}_${{ github.event.inputs.end_chapter }}.mp4"
+        cp chunk_final.mp4 "$FILENAME"
+
+        # Create release
+        RELEASE=$(gh release create "$TAG" "$FILENAME" \
+          --title "$TAG" \
+          --notes "Chunk ch${{ github.event.inputs.start_chapter }}-${{ github.event.inputs.end_chapter }}" \
+          --prerelease)
+
+        # Get asset download URL
+        ASSET_URL=$(gh release view "$TAG" --json assets --jq '.assets[0].url')
+        echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
+        echo "✓ Release: $ASSET_URL"
+
+    - name: Report done to orchestrator DB
+      if: success()
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        python - <<'EOF'
+        import os, requests
+        from datetime import datetime
+        url = os.environ['SUPABASE_URL']
+        key = os.environ['SUPABASE_KEY']
+        h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        requests.patch(f"{url}/rest/v1/chunks", headers=h,
+            json={
+                'status': 'done',
+                'release_url': os.environ.get('ASSET_URL', ''),
+                'completed_at': datetime.utcnow().isoformat()
+            },
+            params={'id': f"eq.${{ github.event.inputs.chunk_id }}"})
+        print("✓ Reported done")
+        EOF
+
+    - name: Report failed to orchestrator DB
+      if: failure()
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        python - <<'EOF'
+        import os, requests
+        url = os.environ['SUPABASE_URL']
+        key = os.environ['SUPABASE_KEY']
+        h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        requests.patch(f"{url}/rest/v1/chunks", headers=h,
+            json={'status': 'failed'},
+            params={'id': f"eq.${{ github.event.inputs.chunk_id }}"})
+        EOF
