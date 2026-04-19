@@ -1,53 +1,223 @@
-name: Process chapters through pipeline
-  env:
-    PYTHONPATH: ${{ github.workspace }}
-    GROQ_KEY: ${{ secrets.GROQ_KEY }}
-    GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
-    GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
-    GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
-  run: |
-    set -e
+name: Worker Pipeline
 
-    mkdir -p chunk_output
+on:
+  workflow_dispatch:
+    inputs:
+      chunk_id:
+        description: 'Chunk ID from orchestrator DB'
+        required: true
+      job_id:
+        description: 'Job ID from orchestrator DB'
+        required: true
+      series_url:
+        description: 'AsuraComics series URL'
+        required: true
+      start_chapter:
+        description: 'First chapter in this chunk'
+        required: true
+      end_chapter:
+        description: 'Last chapter in this chunk'
+        required: true
 
-    if [ ! -f chapter_dirs.txt ]; then
-      echo "❌ chapter_dirs.txt not found"
-      exit 1
-    fi
+jobs:
+  process-chunk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480
 
-    while IFS= read -r CH_DIR || [ -n "$CH_DIR" ]; do
-      [ -z "$CH_DIR" ] && continue
+    steps:
+    - uses: actions/checkout@v4
 
-      CH_NAME=$(basename "$CH_DIR")
-      echo "Processing: $CH_DIR → chunk_output/$CH_NAME"
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: pip
 
-      IMG_COUNT=$(find "$CH_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.webp" \) | wc -l)
-      echo "  Images found: $IMG_COUNT"
+    - name: Install system deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tesseract-ocr espeak-ng ffmpeg libsm6 libxext6 libxrender-dev libgomp1
 
-      if [ "$IMG_COUNT" -eq 0 ]; then
-        echo "❌ No images in $CH_DIR"
-        exit 1
-      fi
+    - name: Install Python deps
+      run: |
+        pip install moviepy==1.0.3 imageio==2.31.1 imageio-ffmpeg
+        pip install playwright
+        playwright install chromium
+        pip install -r requirements.txt
 
-      python pipeline.py "$CH_DIR" \
-        --format webtoon \
-        --voice af_bella \
-        --batch-size 4 \
-        --output-dir chunk_output
+    - name: Mark chunk running
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        python - <<'EOF'
+        import os, requests
+        url = os.environ['SUPABASE_URL']
+        key = os.environ['SUPABASE_KEY']
+        h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        r = requests.patch(f"{url}/rest/v1/chunks",
+            headers=h, json={'status': 'running'},
+            params={'id': f"eq.${{ github.event.inputs.chunk_id }}"})
+        print(f"Mark running: {r.status_code}")
+        EOF
 
-      echo "  Pipeline output:"
-      find chunk_output -name "*.mp4" | sort
+    - name: Scrape chapters from AsuraComics
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python - <<'EOF'
+        import asyncio, sys
+        sys.path.insert(0, '.')
+        from greasy.scraper import scrape_chapter_range
 
-      rm -rf "$CH_DIR"
+        series_url = "${{ github.event.inputs.series_url }}"
+        start = int("${{ github.event.inputs.start_chapter }}")
+        end = int("${{ github.event.inputs.end_chapter }}")
 
-    done < "chapter_dirs.txt"
+        print(f"Scraping {series_url} chapters {start}-{end}")
+        dirs = asyncio.run(scrape_chapter_range(series_url, start, end, "scraped_chapters"))
+        print(f"Chapter dirs: {dirs}")
 
-    echo "All MP4s:"
-    find chunk_output -name "*.mp4" | sort
+        with open("chapter_dirs.txt", "w") as f:
+            f.write("\n".join(dirs))
+        EOF
 
-    MP4_COUNT=$(find chunk_output -name "*.mp4" | wc -l)
+    - name: Process chapters through pipeline
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+        GROQ_KEY: ${{ secrets.GROQ_KEY }}
+        GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
+        GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
+        GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
+      run: |
+        set -e
+        mkdir -p chunk_output
 
-    if [ "$MP4_COUNT" -eq 0 ]; then
-      echo "❌ Pipeline ran but produced no MP4"
-      exit 1
-    fi
+        if [ ! -f chapter_dirs.txt ]; then
+          echo "❌ chapter_dirs.txt not found"
+          exit 1
+        fi
+
+        while IFS= read -r CH_DIR || [ -n "$CH_DIR" ]; do
+          [ -z "$CH_DIR" ] && continue
+
+          CH_NAME=$(basename "$CH_DIR")
+          echo "Processing: $CH_DIR → $CH_NAME"
+
+          IMG_COUNT=$(find "$CH_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.webp" \) | wc -l)
+          echo "  Images found: $IMG_COUNT"
+
+          if [ "$IMG_COUNT" -eq 0 ]; then
+            echo "❌ No images in $CH_DIR"
+            exit 1
+          fi
+
+          python pipeline.py "$CH_DIR" \
+            --format webtoon \
+            --voice af_bella \
+            --batch-size 4 \
+            --output-dir chunk_output
+
+          echo "  Pipeline output so far:"
+          find chunk_output -name "*.mp4" | sort
+
+          rm -rf "$CH_DIR"
+          echo "  ✓ $CH_NAME done, images deleted"
+
+        done < chapter_dirs.txt
+
+        echo "All MP4s:"
+        find chunk_output -name "*.mp4" | sort
+
+        MP4_COUNT=$(find chunk_output -name "*.mp4" | wc -l)
+        if [ "$MP4_COUNT" -eq 0 ]; then
+          echo "❌ Pipeline produced no MP4"
+          exit 1
+        fi
+
+    - name: Merge chapter videos into chunk video
+      run: |
+        find chunk_output -name "*.mp4" | sort > /tmp/mp4_list.txt
+        echo "MP4s to merge:"
+        cat /tmp/mp4_list.txt
+
+        python - <<'EOF'
+        import subprocess, os
+
+        mp4s = open('/tmp/mp4_list.txt').read().strip().splitlines()
+        if not mp4s:
+            raise RuntimeError("No MP4s found in chunk_output")
+
+        if len(mp4s) == 1:
+            import shutil
+            shutil.copy(mp4s[0], 'chunk_final.mp4')
+            print(f"Single MP4, copied directly")
+        else:
+            concat_file = '/tmp/concat.txt'
+            with open(concat_file, 'w') as f:
+                for p in mp4s:
+                    f.write(f"file '{os.path.abspath(p)}'\n")
+
+            subprocess.run([
+                'ffmpeg', '-y', '-f', 'concat', '-safe', '0',
+                '-i', concat_file, '-c', 'copy', 'chunk_final.mp4'
+            ], check=True)
+
+        size_mb = os.path.getsize('chunk_final.mp4') / 1024 / 1024
+        print(f"✓ chunk_final.mp4 ({size_mb:.1f} MB)")
+        EOF
+
+    - name: Upload as GitHub Release asset
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG="chunk-${{ github.event.inputs.job_id }}-ch${{ github.event.inputs.start_chapter }}-${{ github.event.inputs.end_chapter }}"
+        FILENAME="chunk_ch${{ github.event.inputs.start_chapter }}_${{ github.event.inputs.end_chapter }}.mp4"
+        cp chunk_final.mp4 "$FILENAME"
+
+        gh release create "$TAG" "$FILENAME" \
+          --title "$TAG" \
+          --notes "Chunk ch${{ github.event.inputs.start_chapter }}-${{ github.event.inputs.end_chapter }}" \
+          --prerelease
+
+        ASSET_URL=$(gh release view "$TAG" --json assets --jq '.assets[0].url')
+        echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
+        echo "✓ Release: $ASSET_URL"
+
+    - name: Report done to orchestrator DB
+      if: success()
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        python - <<'EOF'
+        import os, requests
+        from datetime import datetime
+        url = os.environ['SUPABASE_URL']
+        key = os.environ['SUPABASE_KEY']
+        h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        r = requests.patch(f"{url}/rest/v1/chunks", headers=h,
+            json={
+                'status': 'done',
+                'release_url': os.environ.get('ASSET_URL', ''),
+                'completed_at': datetime.utcnow().isoformat()
+            },
+            params={'id': f"eq.${{ github.event.inputs.chunk_id }}"})
+        print(f"✓ Reported done: {r.status_code}")
+        EOF
+
+    - name: Report failed to orchestrator DB
+      if: failure()
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        python - <<'EOF'
+        import os, requests
+        url = os.environ['SUPABASE_URL']
+        key = os.environ['SUPABASE_KEY']
+        h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        r = requests.patch(f"{url}/rest/v1/chunks", headers=h,
+            json={'status': 'failed'},
+            params={'id': f"eq.${{ github.event.inputs.chunk_id }}"})
+        print(f"Reported failed: {r.status_code}")
+        EOF
