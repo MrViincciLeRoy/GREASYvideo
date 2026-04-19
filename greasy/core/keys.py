@@ -158,7 +158,7 @@ class APIKeyManager:
 
         if len(groq_statuses) > 0:
             for _ in range(len(groq_statuses)):
-                current_status = groq_statuses[self.current_key_index % len(groq_statuses)]
+                current_status = groq_statuses[self.current_key_index*100 % len(groq_statuses)]
                 current_status.reset_if_needed()
 
                 if not current_status.is_exhausted():
