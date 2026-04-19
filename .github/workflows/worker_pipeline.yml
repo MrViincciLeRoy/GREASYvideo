@@ -1,4 +1,4 @@
-- name: Process chapters through pipeline
+name: Process chapters through pipeline
   env:
     PYTHONPATH: ${{ github.workspace }}
     GROQ_KEY: ${{ secrets.GROQ_KEY }}
