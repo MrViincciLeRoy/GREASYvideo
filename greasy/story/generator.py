@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 # Import key manager
-from enhanced_api_key_manager import APIKeyManager, ManagedGroqClient
+from greasy.core.keys import APIKeyManager, ManagedGroqClient
 
 # ============================================================================
 # CONFIGURATION

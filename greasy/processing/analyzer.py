@@ -12,10 +12,10 @@ from dataclasses import dataclass
 from datetime import datetime
 
 # Import key manager
-from enhanced_api_key_manager import APIKeyManager, ManagedGroqClient
-from character_tracker import CharacterTracker, CharacterGuide
+from greasy.core.keys import APIKeyManager, ManagedGroqClient
+from greasy.core.tracker import CharacterTracker, CharacterGuide
 # Assume PanelDetector is available
-from panel_detector import PanelDetector 
+from greasy.processing.detector import PanelDetector 
 @dataclass
 class PanelAnalysis:
     """Enhanced panel analysis with character tracking"""
@@ -471,7 +471,7 @@ Be detailed but concise."""
 # ============================================================================
 
 if __name__ == "__main__":
-    #from character_tracker import CharacterGuide
+    #from greasy.core.tracker import CharacterGuide
 
     print("="*70)
     print("COMIC ANALYZER WITH API KEY ROTATION")

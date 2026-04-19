@@ -12,11 +12,11 @@ from datetime import datetime
 import argparse
 
 # Import all necessary components
-from enhanced_api_key_manager import APIKeyManager
-from character_tracker import CharacterGuide
-from pdf_comic_processor_with_keys import PDFComicProcessor
-from story_generator_with_keys import ComicStoryGenerator, StoryContext
-from VidGen import KokoroTTSVideoGenerator
+from greasy.core.keys import APIKeyManager
+from greasy.core.tracker import CharacterGuide
+from greasy.processing.pdf import PDFComicProcessor
+from greasy.story.generator import ComicStoryGenerator, StoryContext
+from greasy.video.generator import KokoroTTSVideoGenerator
 
 
 class ComicPipeline:

@@ -14,9 +14,9 @@ from dataclasses import dataclass
 from datetime import datetime
 
 # Import enhanced key manager
-from enhanced_api_key_manager import APIKeyManager, ManagedGroqClient
-from character_tracker import CharacterTracker, CharacterGuide
-from integrated_analyzer_with_key_manager import CharacterAwareComicAnalyzer, PageAnalysis
+from greasy.core.keys import APIKeyManager, ManagedGroqClient
+from greasy.core.tracker import CharacterTracker, CharacterGuide
+from greasy.processing.analyzer import CharacterAwareComicAnalyzer, PageAnalysis
 
 @dataclass
 class ComicBookAnalysis:
