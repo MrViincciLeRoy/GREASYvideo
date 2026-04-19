@@ -91,7 +91,7 @@ jobs:
         fi
         
         # Run the pipeline
-        python master_comic_pipeline.py "$PDF_PATH" \
+        python pipeline.py "$PDF_PATH" \
           --start-page ${{ github.event.inputs.start_page }} \
           $END_PAGE_ARG \
           --voice ${{ github.event.inputs.voice }} \
