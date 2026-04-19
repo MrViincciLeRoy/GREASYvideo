@@ -311,7 +311,26 @@ Be detailed but concise."""
         print(f"✓ Found {len(panels)} panels")
 
         panel_output_dir = os.path.join(output_dir, f"page_{page_number:03d}_panels")
-        panel_paths = self.detector.extract_panel_images(page_image_path, panels, panel_output_dir)
+
+        if not panels:
+            print(f"⚠️  No panels detected on page {page_number} — using full page as single panel")
+            os.makedirs(panel_output_dir, exist_ok=True)
+            from PIL import Image as PILImage
+            from greasy.processing.detector import Panel
+            img = PILImage.open(page_image_path)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+            fallback_path = os.path.join(panel_output_dir, "panel_01.jpg")
+            img.save(fallback_path, "JPEG", quality=95)
+            w, h = img.size
+            fallback_panel = Panel(
+                panel_id=1, x=0, y=0, width=w, height=h, area=w * h,
+                center_x=w // 2, center_y=h // 2, reading_order=1
+            )
+            panels = [fallback_panel]
+            panel_paths = {1: fallback_path}
+        else:
+            panel_paths = self.detector.extract_panel_images(page_image_path, panels, panel_output_dir)
 
         print(f"\n🤖 Analyzing panels with character awareness...")
         panel_analyses = []
