@@ -1,45 +1,53 @@
 - name: Process chapters through pipeline
-      env:
-        PYTHONPATH: ${{ github.workspace }}
-        GROQ_KEY: ${{ secrets.GROQ_KEY }}
-        GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
-        GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
-        GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
-      run: |
-        set -e
-        mkdir -p chunk_output
+  env:
+    PYTHONPATH: ${{ github.workspace }}
+    GROQ_KEY: ${{ secrets.GROQ_KEY }}
+    GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
+    GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
+    GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
+  run: |
+    set -e
 
-        while IFS= read -r CH_DIR; do
-          [ -z "$CH_DIR" ] && continue
+    mkdir -p chunk_output
 
-          CH_NAME=$(basename "$CH_DIR")
-          echo "Processing: $CH_DIR → chunk_output/$CH_NAME"
+    if [ ! -f chapter_dirs.txt ]; then
+      echo "❌ chapter_dirs.txt not found"
+      exit 1
+    fi
 
-          IMG_COUNT=$(find "$CH_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.webp" \) | wc -l)
-          echo "  Images found: $IMG_COUNT"
+    while IFS= read -r CH_DIR || [ -n "$CH_DIR" ]; do
+      [ -z "$CH_DIR" ] && continue
 
-          if [ "$IMG_COUNT" -eq 0 ]; then
-            echo "❌ No images in $CH_DIR"
-            exit 1
-          fi
+      CH_NAME=$(basename "$CH_DIR")
+      echo "Processing: $CH_DIR → chunk_output/$CH_NAME"
 
-          python pipeline.py "$CH_DIR" \
-            --format webtoon \
-            --voice af_bella \
-            --batch-size 4 \
-            --output-dir chunk_output
+      IMG_COUNT=$(find "$CH_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.webp" \) | wc -l)
+      echo "  Images found: $IMG_COUNT"
 
-          echo "  Pipeline output:"
-          find chunk_output -name "*.mp4" | sort
+      if [ "$IMG_COUNT" -eq 0 ]; then
+        echo "❌ No images in $CH_DIR"
+        exit 1
+      fi
 
-          rm -rf "$CH_DIR"
-        done < chapter_dirs.txt
+      python pipeline.py "$CH_DIR" \
+        --format webtoon \
+        --voice af_bella \
+        --batch-size 4 \
+        --output-dir chunk_output
 
-        echo "All MP4s:"
-        find chunk_output -name "*.mp4" | sort
+      echo "  Pipeline output:"
+      find chunk_output -name "*.mp4" | sort
 
-        MP4_COUNT=$(find chunk_output -name "*.mp4" | wc -l)
-        if [ "$MP4_COUNT" -eq 0 ]; then
-          echo "❌ Pipeline ran but produced no MP4"
-          exit 1
-        fi
+      rm -rf "$CH_DIR"
+
+    done < "chapter_dirs.txt"
+
+    echo "All MP4s:"
+    find chunk_output -name "*.mp4" | sort
+
+    MP4_COUNT=$(find chunk_output -name "*.mp4" | wc -l)
+
+    if [ "$MP4_COUNT" -eq 0 ]; then
+      echo "❌ Pipeline ran but produced no MP4"
+      exit 1
+    fi
