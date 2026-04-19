@@ -19,34 +19,31 @@ from greasy.story.generator import ComicStoryGenerator, StoryContext
 from greasy.video.generator import KokoroTTSVideoGenerator
 
 
-def images_from_dir(image_dir: str, dpi_hint: int = 150) -> list:
-    """
-    Return sorted list of image paths from a directory.
-    Used when input is a scraped chapter folder instead of a PDF.
-    """
+def images_from_dir(image_dir: str) -> list:
     exts = {".jpg", ".jpeg", ".png", ".webp"}
-    paths = sorted([
+    return sorted([
         str(p) for p in Path(image_dir).iterdir()
         if p.suffix.lower() in exts
     ])
-    return paths
 
 
 class ComicPipeline:
 
-    def __init__(self, groq_keys: list, comic_format: str = "auto"):
+    def __init__(self, groq_keys: list, hf_token: str = None, comic_format: str = "auto"):
         self.groq_keys = [k for k in groq_keys if k]
         self.comic_format = comic_format
 
         self.key_manager = APIKeyManager(
             groq_keys=self.groq_keys,
-            huggingface_token=None,
+            huggingface_token=hf_token or None,
             state_file="pipeline_api_keys.json"
         )
+
+        hf_status = "✓ HuggingFace fallback ready" if hf_token else "✗ No HuggingFace token"
         print(f"✓ Pipeline ready — {len(self.groq_keys)} Groq keys, format: {comic_format}")
+        print(f"  {hf_status}")
 
     def parse_input_name(self, input_path: str) -> tuple:
-        """Parse series/chapter name from input path."""
         import re
         name = Path(input_path).stem
         series = re.sub(r'[^\w\s-]', '', name)
@@ -70,10 +67,7 @@ class ComicPipeline:
 
         series_name, identifier = self.parse_input_name(str(input_path))
         output_base = Path(base_output_dir) / series_name / identifier
-        paths = {
-            k: str(output_base / k)
-            for k in ["extracted_pages", "analysis", "story", "video"]
-        }
+        paths = {k: str(output_base / k) for k in ["extracted_pages", "analysis", "story", "video"]}
         paths["base"] = str(output_base)
         for p in paths.values():
             os.makedirs(p, exist_ok=True)
@@ -96,7 +90,7 @@ class ComicPipeline:
             story_theme=character_config.get("story_theme", "")
         )
 
-        # STEP 1: Get page images
+        # STEP 1: Page extraction / analysis
         print(f"\n{'='*70}")
         print("STEP 1/3: PAGE EXTRACTION")
         print(f"{'='*70}")
@@ -115,7 +109,6 @@ class ComicPipeline:
                 extract_dpi=extract_dpi
             )
         else:
-            # Image directory — analyze pages directly
             page_images = images_from_dir(str(input_path))
             if not page_images:
                 print(f"❌ No images found in {input_path}")
@@ -173,7 +166,7 @@ class ComicPipeline:
         )
 
         story_gen = ComicStoryGenerator(self.key_manager)
-        story_output = story_gen.generate(
+        story_gen.generate(
             analysis_path=analysis_json_path,
             context=story_context,
             output_dir=paths["story"]
@@ -227,8 +220,10 @@ def main():
         os.getenv("GROQ_KEY"),
         os.getenv("GROQ_KEY_2"),
         os.getenv("GROQ_KEY_3"),
-        os.getenv("GROQ_KEY_4")
+        os.getenv("GROQ_KEY_4"),
     ]
+
+    hf_token = os.getenv("HF_TOKEN")
 
     character_config = {
         "protagonist_name": None,
@@ -242,7 +237,7 @@ def main():
         "story_theme": "Journey"
     }
 
-    pipeline = ComicPipeline(groq_keys=groq_keys, comic_format=args.format)
+    pipeline = ComicPipeline(groq_keys=groq_keys, hf_token=hf_token, comic_format=args.format)
     pipeline.run(
         input_path=args.input,
         character_config=character_config,

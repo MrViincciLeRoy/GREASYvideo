@@ -88,6 +88,7 @@ jobs:
         GROQ_KEY_2: ${{ secrets.GROQ_KEY_2 }}
         GROQ_KEY_3: ${{ secrets.GROQ_KEY_3 }}
         GROQ_KEY_4: ${{ secrets.GROQ_KEY_4 }}
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
       run: |
         set -e
         mkdir -p chunk_output
