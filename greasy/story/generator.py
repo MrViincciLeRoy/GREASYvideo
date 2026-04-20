@@ -1,50 +1,50 @@
-
-# story_generator_with_keys.py
-"""
-Story Generator with API Key Rotation
-"""
-
 import os
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
-# Import key manager
 from greasy.core.keys import APIKeyManager, ManagedGroqClient
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
 
-ANALYSIS_PATH = "/content/knight_king_analysis/complete_analysis.json"
-OUTPUT_DIR = "story_output"
+HF_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
-# API KEYS
-GROQ_KEYS = [
-            os.getenv('GROQ_KEY'), 
-        os.getenv('GROQ_KEY_2'), 
-       os.getenv('GROQ_KEY_3'), 
-       os.getenv('GROQ_KEY_4')
-            # Add more keys for higher capacity
-]
 
-# Character Configuration
-MAIN_HERO = "Leon"
-HERO_ROLE = "Knight King"
-HERO_GENDER = "male"
-SETTING = "Fantasy kingdom"
-TONE = "epic fantasy"
-STORY_THEME = "rebirth and redemption"
+class HFStoryClient:
+    """Calls HuggingFace Inference API directly — no model download, pure text."""
 
-ADDITIONAL_CHARACTERS = [
-    {"name": "Nanny", "role": "Caretaker", "gender": "female"},
-    {"name": "Grand Duke", "role": "Noble Lord", "gender": "male"}
-]
+    def __init__(self, token: str):
+        from huggingface_hub import InferenceClient
+        self.client = InferenceClient(token=token)
+        print(f"✓ HF story client ready ({HF_MODEL})")
 
-# ============================================================================
-# DATA CLASSES
-# ============================================================================
+    def generate(self, prompt: str, max_tokens: int = 3000) -> str:
+        response = self.client.chat_completion(
+            model=HF_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=max_tokens,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+
+
+class GroqStoryClient:
+    """Groq fallback when no HF token available."""
+
+    def __init__(self, key_manager: APIKeyManager):
+        self.client = ManagedGroqClient(key_manager)
+        self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
+        print("⚠ No HF token — story generation using Groq (costs Groq quota)")
+
+    def generate(self, prompt: str, max_tokens: int = 3000) -> str:
+        resp = self.client.chat_completions_create(
+            messages=[{"role": "user", "content": prompt}],
+            model=self.model,
+            max_tokens=max_tokens,
+            temperature=0.7
+        )
+        return resp.choices[0].message.content.strip()
+
 
 @dataclass
 class StoryContext:
@@ -59,7 +59,7 @@ class StoryContext:
     def to_prompt_text(self) -> str:
         pronouns = self._get_pronouns(self.hero_gender)
         text = f"Main Hero: {self.main_hero} ({self.hero_role})\n"
-        text += f"Gender: {self.hero_gender} - Use pronouns: {pronouns}\n"
+        text += f"Gender: {self.hero_gender} — pronouns: {pronouns}\n"
         if self.setting:
             text += f"Setting: {self.setting}\n"
         if self.tone:
@@ -69,24 +69,24 @@ class StoryContext:
         if self.additional_characters:
             text += "Other Characters:\n"
             for char in self.additional_characters:
-                char_pronouns = self._get_pronouns(char.get('gender', 'unspecified'))
-                text += f"  - {char['name']}: {char['role']} ({char_pronouns})\n"
+                text += f"  - {char['name']}: {char['role']} ({self._get_pronouns(char.get('gender', 'unspecified'))})\n"
         return text
 
     def _get_pronouns(self, gender: str) -> str:
-        pronoun_map = {
+        return {
             "male": "he/him/his",
             "female": "she/her/hers",
             "non-binary": "they/them/their",
             "unspecified": "they/them/their"
-        }
-        return pronoun_map.get(gender.lower(), "they/them/their")
+        }.get(gender.lower(), "they/them/their")
+
 
 @dataclass
 class PanelReference:
     page_number: int
     panel_id: int
     reading_order: int
+
 
 @dataclass
 class StorySegment:
@@ -97,23 +97,28 @@ class StorySegment:
     narrative_elements: List[str]
     panel_details: List[Dict] = None
 
-# ============================================================================
-# STORY GENERATOR
-# ============================================================================
 
 class ComicStoryGenerator:
+
     def __init__(self, key_manager: APIKeyManager):
         self.key_manager = key_manager
-        self.client = ManagedGroqClient(key_manager)
-        self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
+
+        hf_token = (
+            key_manager.huggingface_token
+            or os.getenv("HF_TOKEN")
+        )
+
+        if hf_token:
+            self.story_client = HFStoryClient(hf_token)
+            self.using_hf = True
+        else:
+            self.story_client = GroqStoryClient(key_manager)
+            self.using_hf = False
 
     def generate(self, analysis_path: str, context: StoryContext, output_dir: str) -> Dict:
-        print(f"\n{'='*80}")
-        print("📖 GENERATING STORY WITH API KEY ROTATION")
-        print(f"{'='*80}\n")
-
-        # Show initial API status
-        self.key_manager.print_status()
+        print(f"\n{'='*70}")
+        print(f"STORY GENERATION — {'HuggingFace API (free, saves Groq quota)' if self.using_hf else 'Groq (fallback)'}")
+        print(f"{'='*70}\n")
 
         with open(analysis_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -125,28 +130,20 @@ class ComicStoryGenerator:
 
         for page_data in data['pages']:
             page_num = page_data['page_number']
-            print(f"\n📄 Page {page_num}...")
-
-            # Show API status every 5 pages
-            if page_num % 5 == 0:
-                self.key_manager.print_status()
+            print(f"  Page {page_num}...", end=" ", flush=True)
 
             segments = self._generate_page(page_data, seg_id, data['title'], context)
 
-            # Check coverage
             used = {ref.panel_id for seg in segments for ref in seg.panel_references}
-            all_panels = {p['panel_id'] for p in page_data['panels']}
-            missing = all_panels - used
-
+            missing = {p['panel_id'] for p in page_data['panels']} - used
             if missing:
-                print(f"   ⚠ Missing panels {sorted(missing)}, creating segment...")
-                extra = self._create_missing_segment(page_data, sorted(missing), seg_id + len(segments), context)
-                segments.append(extra)
+                segments.append(self._create_missing_segment(
+                    page_data, sorted(missing), seg_id + len(segments), context
+                ))
 
             all_segments.extend(segments)
             seg_id += len(segments)
 
-        # Create output
         output = {
             'title': data['title'],
             'story_context': {
@@ -160,18 +157,14 @@ class ComicStoryGenerator:
             },
             'total_pages': data['total_pages'],
             'total_segments': len(all_segments),
+            'generated_via': 'huggingface_api' if self.using_hf else 'groq',
             'segments': [self._seg_to_dict(s) for s in all_segments],
             'generated_at': datetime.now().isoformat()
         }
 
         self._save_outputs(output, output_dir)
 
-        # Show final API usage
-        print(f"\n{'='*80}")
-        print("📊 Final API Usage:")
-        print(f"{'='*80}")
-        self.key_manager.print_status()
-
+        print(f"\n✓ {len(all_segments)} segments generated via {'HuggingFace' if self.using_hf else 'Groq'}")
         return output
 
     def _generate_page(self, page_data, start_id, title, context):
@@ -179,18 +172,12 @@ class ComicStoryGenerator:
         panels = page_data['panels']
         page_context = page_data.get('page_context', '')
 
-        # Extract panel descriptions
-        panels_descriptions = []
+        panels_text = ""
         for p in panels:
-            desc = f"\nPanel {p['panel_id']} (Order: {p['reading_order']}):\n"
-            desc += f"  Visual: {p['analysis'][:500]}\n"
-
+            panels_text += f"\nPanel {p['panel_id']} (Order: {p['reading_order']}):\n"
+            panels_text += f"  Visual: {p['analysis'][:500]}\n"
             if p.get('ocr_text'):
-                desc += f"  Text: {p['ocr_text'][:150]}\n"
-
-            panels_descriptions.append(desc)
-
-        panels_text = "".join(panels_descriptions)
+                panels_text += f"  Text: {p['ocr_text'][:150]}\n"
 
         prompt = f"""Write narrative prose adapting "{title}" into a story.
 
@@ -204,13 +191,13 @@ PANELS TO ADAPT:
 {panels_text}
 
 TASK:
-Create 2-4 story segments (100-250 words each) that narratively describe these {len(panels)} panels.
+Create 2-4 story segments (100-250 words each) covering all {len(panels)} panels.
 - Main character: {context.main_hero}
 - Use {context._get_pronouns(context.hero_gender)} pronouns
-- Write flowing narrative prose (no markdown, no analysis formatting)
-- Cover all panels (1-{len(panels)})
+- Flowing narrative prose only, no markdown or analysis
+- Cover panels 1-{len(panels)}
 
-Return ONLY JSON (no backticks):
+Return ONLY valid JSON array (no backticks, no extra text):
 [
   {{
     "segment_text": "Narrative prose here...",
@@ -220,38 +207,24 @@ Return ONLY JSON (no backticks):
 ]"""
 
         try:
-            resp = self.client.chat_completions_create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model,
-                max_tokens=3000,
-                temperature=0.7
-            )
+            text = self.story_client.generate(prompt, max_tokens=3000)
 
-            text = resp.choices[0].message.content.strip()
-
-            # Extract JSON
             start = text.find('[')
             end = text.rfind(']')
-            if start != -1 and end != -1:
-                text = text[start:end+1]
+            if start == -1 or end == -1:
+                raise ValueError("No JSON array in response")
 
-            segments_data = json.loads(text)
-
-            # Build segments
+            segments_data = json.loads(text[start:end + 1])
             segments = []
-            for i, seg in enumerate(segments_data):
-                refs = []
-                details = []
 
+            for i, seg in enumerate(segments_data):
+                refs, details = [], []
                 for pid in seg['panel_ids']:
                     panel = next((p for p in panels if p['panel_id'] == pid), None)
                     if panel:
                         refs.append(PanelReference(page_num, pid, panel['reading_order']))
-                        details.append({
-                            'page_number': page_num,
-                            'panel_id': pid,
-                            'reading_order': panel['reading_order']
-                        })
+                        details.append({'page_number': page_num, 'panel_id': pid,
+                                        'reading_order': panel['reading_order']})
 
                 segments.append(StorySegment(
                     segment_id=start_id + i,
@@ -262,29 +235,25 @@ Return ONLY JSON (no backticks):
                     panel_details=details
                 ))
 
-            print(f"   ✓ Generated {len(segments)} segments")
+            print(f"✓ {len(segments)} segments")
             return segments
 
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            print(f"❌ {e}")
             return self._create_fallback_segment(panels, page_num, start_id, context)
 
     def _create_fallback_segment(self, panels, page_num, start_id, context):
-        """Create fallback segment"""
         refs = [PanelReference(page_num, p['panel_id'], p['reading_order']) for p in panels]
-        text = f"{context.main_hero} continued through the events depicted in the panels."
-
-        return [StorySegment(start_id, text, refs, page_num, ['fallback'], [])]
+        return [StorySegment(start_id,
+                             f"{context.main_hero} continued through the scene.",
+                             refs, page_num, ['fallback'], [])]
 
     def _create_missing_segment(self, page_data, missing_ids, seg_id, context):
-        """Create segment for missing panels"""
         page_num = page_data['page_number']
         panels = [p for p in page_data['panels'] if p['panel_id'] in missing_ids]
-
         refs = [PanelReference(page_num, p['panel_id'], p['reading_order']) for p in panels]
-        text = f"{context.main_hero} progressed through the scene."
-
-        return StorySegment(seg_id, text, refs, page_num, ['missing'], [])
+        return StorySegment(seg_id, f"{context.main_hero} progressed through the scene.",
+                            refs, page_num, ['missing'], [])
 
     def _seg_to_dict(self, seg):
         return {
@@ -299,13 +268,11 @@ Return ONLY JSON (no backticks):
         }
 
     def _save_outputs(self, output, output_dir):
-        # Main JSON
         path = os.path.join(output_dir, "story_complete.json")
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(output, f, indent=2, ensure_ascii=False)
-        print(f"\n💾 Saved: {path}")
+        print(f"\n  Saved: {path}")
 
-        # Panel mapping for video
         mapping = {
             'title': output['title'],
             'story_context': output['story_context'],
@@ -325,49 +292,4 @@ Return ONLY JSON (no backticks):
         path = os.path.join(output_dir, "panel_to_story_mapping.json")
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(mapping, f, indent=2)
-        print(f"🗺️  Saved: {path}")
-
-# ============================================================================
-# MAIN
-# ============================================================================
-
-if __name__ == "__main__":
-    print("""
-╔══════════════════════════════════════════════════════════════╗
-║        STORY GENERATOR WITH API KEY ROTATION                 ║
-╚══════════════════════════════════════════════════════════════╝
-""")
-
-    # Validate
-    if not os.path.exists(ANALYSIS_PATH):
-        print(f"❌ Error: {ANALYSIS_PATH} not found!")
-        exit(1)
-
-    # Create key manager
-    key_manager = APIKeyManager(
-        groq_keys=GROQ_KEYS,
-        huggingface_token=None,
-        state_file="story_api_keys.json"
-    )
-
-    # Create context
-    context = StoryContext(
-        main_hero=MAIN_HERO,
-        hero_role=HERO_ROLE,
-        hero_gender=HERO_GENDER,
-        setting=SETTING,
-        tone=TONE,
-        additional_characters=ADDITIONAL_CHARACTERS,
-        story_theme=STORY_THEME
-    )
-
-    # Generate
-    generator = ComicStoryGenerator(key_manager)
-    result = generator.generate(ANALYSIS_PATH, context, OUTPUT_DIR)
-
-    print(f"\n{'='*80}")
-    print("✅ COMPLETE!")
-    print(f"{'='*80}")
-    print(f"\n📊 {result['total_segments']} segments created")
-    print(f"📄 {result['total_pages']} pages processed")
-    print(f"\n🎬 Ready for video generation!")
+        print(f"  Saved: {path}")
