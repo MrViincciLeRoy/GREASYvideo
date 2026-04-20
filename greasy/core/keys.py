@@ -92,7 +92,6 @@ class APIKeyManager:
     state_file: str = "api_key_state.json"
 
     def __post_init__(self):
-        # Lock for all state mutations — makes the manager thread-safe
         self._lock = threading.Lock()
 
         if os.path.exists(self.state_file):
@@ -156,7 +155,6 @@ class APIKeyManager:
             )
 
     def _rate_limit_unsafe(self):
-        """Rate limit — must be called while holding self._lock."""
         current_time = time.time()
         elapsed = current_time - self.last_request_time
         if elapsed < self.min_request_interval:
@@ -257,12 +255,10 @@ class APIKeyManager:
 
 
 class ManagedGroqClient:
-    """One client instance per thread — call make_client() to get a thread-local client."""
 
     def __init__(self, key_manager: APIKeyManager):
         self.key_manager = key_manager
         self._local = threading.local()
-        # Initialise one client on the calling thread
         self._init_client()
 
     def _init_client(self):
@@ -280,7 +276,6 @@ class ManagedGroqClient:
             self._local.groq_client = None
 
     def _ensure_client(self):
-        """Make sure this thread has an initialised client."""
         if not hasattr(self._local, 'current_key'):
             self._init_client()
 
@@ -301,22 +296,19 @@ class ManagedGroqClient:
                     return response
 
                 else:
+                    # HuggingFace fallback — use chat_completion (maps to conversational task)
                     hf_model = "meta-llama/Llama-3.3-70B-Instruct"
-                    prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
-                    response_text = self._local.hf_client.text_generation(
-                        prompt, model=hf_model,
-                        max_new_tokens=kwargs.get('max_tokens', 1000),
+                    print(f"  🤗 HuggingFace chat_completion ({hf_model})...")
+
+                    response = self._local.hf_client.chat_completion(
+                        model=hf_model,
+                        messages=messages,
+                        max_tokens=kwargs.get('max_tokens', 1000),
                         temperature=kwargs.get('temperature', 0.7)
                     )
 
-                    class HFResponse:
-                        def __init__(self, text):
-                            self.choices = [type('obj', (object,), {
-                                'message': type('obj', (object,), {'content': text})()
-                            })()]
-
                     self.key_manager.record_success(self._local.current_key)
-                    return HFResponse(response_text)
+                    return response
 
             except Exception as e:
                 print(f"⚠️  Error attempt {attempt + 1}/{max_retries}: {e}")
