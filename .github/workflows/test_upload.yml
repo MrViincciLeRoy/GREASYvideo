@@ -1,0 +1,81 @@
+name: Test Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      mp4_file:
+        description: 'MP4 filename from data/ folder'
+        required: true
+        default: 'The_Knight_King_Who_Returned_With_A_God_CH1_video.mp4'
+
+permissions:
+  contents: write  # Required for gh release create
+
+jobs:
+  test-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Verify MP4 exists
+      run: |
+        MP4="data/${{ github.event.inputs.mp4_file }}"
+        if [ ! -f "$MP4" ]; then
+          echo "❌ Not found: $MP4"
+          echo "Files in data/:"
+          ls -lh data/ || echo "(data/ is empty or missing)"
+          exit 1
+        fi
+        SIZE=$(du -h "$MP4" | cut -f1)
+        echo "✓ Found: $MP4 ($SIZE)"
+        echo "MP4_PATH=$MP4" >> $GITHUB_ENV
+        echo "MP4_SIZE=$SIZE" >> $GITHUB_ENV
+
+    - name: Upload as artifact (always works)
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-video
+        path: ${{ env.MP4_PATH }}
+        retention-days: 7
+
+    - name: Try GitHub Release upload
+      id: release
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG="test-video-${{ github.run_id }}"
+        FILENAME="${{ github.event.inputs.mp4_file }}"
+
+        gh release create "$TAG" "${{ env.MP4_PATH }}" \
+          --title "Test: $FILENAME" \
+          --notes "Test upload — ${{ env.MP4_SIZE }}" \
+          --prerelease
+
+        ASSET_URL=$(gh release view "$TAG" --json assets --jq '.assets[0].url')
+        echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
+        echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+        echo "✓ Release URL: $ASSET_URL"
+
+    - name: Summary
+      if: always()
+      run: |
+        echo "# 🎬 Test Upload Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**File:** \`${{ env.MP4_PATH }}\` (${{ env.MP4_SIZE }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "## 📦 Artifact (always available)" >> $GITHUB_STEP_SUMMARY
+        echo "Download from the **Artifacts** section at the bottom of this run page." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ steps.release.outcome }}" = "success" ]; then
+          echo "## ✅ GitHub Release" >> $GITHUB_STEP_SUMMARY
+          echo "Asset URL: \`${{ env.ASSET_URL }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Tag: \`${{ env.RELEASE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ GitHub Release Failed" >> $GITHUB_STEP_SUMMARY
+          echo "The \`GITHUB_TOKEN\` still lacks release write permission." >> $GITHUB_STEP_SUMMARY
+          echo "**Fix:** Go to repo → Settings → Actions → General → Workflow permissions → set to **Read and write**." >> $GITHUB_STEP_SUMMARY
+        fi
