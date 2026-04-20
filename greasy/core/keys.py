@@ -1,10 +1,10 @@
 import json
 import os
+import re
 import threading
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Tuple
 from dataclasses import dataclass, field, asdict
-from pathlib import Path
 import time
 
 
@@ -72,6 +72,18 @@ class APIKeyStatus:
         self.error_count += 1
         if self.error_count >= 5:
             self.is_active = False
+
+
+def _parse_retry_wait(error_str: str) -> float:
+    """
+    Pull the suggested wait time from a Groq 429 error message.
+    e.g. 'Please try again in 6.164s' -> 6.164
+    Falls back to 10s if not found.
+    """
+    match = re.search(r'try again in ([\d.]+)s', error_str)
+    if match:
+        return float(match.group(1)) + 1.0  # add 1s buffer
+    return 10.0
 
 
 @dataclass
@@ -175,9 +187,13 @@ class APIKeyManager:
             if api_key in self.key_statuses:
                 status = self.key_statuses[api_key]
                 status.record_error()
-                if "rate limit" in str(error).lower() or "429" in str(error):
-                    status.requests_remaining = 0
-                    print(f"⚠️  Key {api_key[:12]}... hit rate limit, rotating")
+                error_str = str(error)
+                if "429" in error_str or "rate limit" in error_str.lower():
+                    # Only mark daily-exhausted if it's a requests limit, not TPM
+                    if "tokens per minute" not in error_str.lower():
+                        status.requests_remaining = 0
+                        print(f"⚠️  Key {api_key[:12]}... hit request limit, rotating")
+                    # TPM errors: don't mark exhausted, just rotate temporarily
                 self.save_state()
 
     def get_status_summary(self) -> Dict:
@@ -279,9 +295,24 @@ class ManagedGroqClient:
         if not hasattr(self._local, 'current_key'):
             self._init_client()
 
+    def _strip_to_text_only(self, messages: List[Dict]) -> List[Dict]:
+        """Strip image_url parts — HF free tier is text-only."""
+        text_only = []
+        for msg in messages:
+            content = msg.get('content', '')
+            if isinstance(content, list):
+                text_parts = [
+                    part['text'] for part in content
+                    if isinstance(part, dict) and part.get('type') == 'text'
+                ]
+                content = '\n'.join(text_parts)
+            text_only.append({'role': msg['role'], 'content': content})
+        return text_only
+
     def chat_completions_create(self, messages: List[Dict], model: str, **kwargs):
         self._ensure_client()
-        max_retries = len(self.key_manager.groq_keys) + 1
+        num_keys = max(len(self.key_manager.groq_keys), 1)
+        max_retries = num_keys * 2 + 1  # enough to cycle all keys twice
 
         for attempt in range(max_retries):
             try:
@@ -296,21 +327,38 @@ class ManagedGroqClient:
                     return response
 
                 else:
-                    # HuggingFace fallback — use chat_completion (maps to conversational task)
                     hf_model = "meta-llama/Llama-3.3-70B-Instruct"
                     print(f"  🤗 HuggingFace chat_completion ({hf_model})...")
-
+                    text_messages = self._strip_to_text_only(messages)
                     response = self._local.hf_client.chat_completion(
                         model=hf_model,
-                        messages=messages,
+                        messages=text_messages,
                         max_tokens=kwargs.get('max_tokens', 1000),
                         temperature=kwargs.get('temperature', 0.7)
                     )
-
                     self.key_manager.record_success(self._local.current_key)
                     return response
 
             except Exception as e:
+                error_str = str(e)
+                is_tpm = "tokens per minute" in error_str.lower()
+                is_429 = "429" in error_str or "rate limit" in error_str.lower()
+
+                if is_429 and is_tpm:
+                    # TPM hit — parse wait time from error, sleep then rotate key
+                    wait = _parse_retry_wait(error_str)
+                    print(f"⚠️  TPM limit on key {self._local.current_key[:12]}... "
+                          f"waiting {wait:.1f}s then rotating (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait)
+                    # Rotate to next key without marking this one exhausted
+                    self.key_manager.current_key_index += 1
+                    try:
+                        self._init_client()
+                    except RuntimeError:
+                        if attempt == max_retries - 1:
+                            raise
+                    continue
+
                 print(f"⚠️  Error attempt {attempt + 1}/{max_retries}: {e}")
                 self.key_manager.record_error(self._local.current_key, e)
                 try:
