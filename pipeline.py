@@ -19,6 +19,20 @@ from greasy.story.generator import ComicStoryGenerator, StoryContext
 from greasy.video.generator import KokoroTTSVideoGenerator
 
 
+def collect_groq_keys() -> list:
+    """Collect all GROQ_KEY, GROQ_KEY_2 ... GROQ_KEY_20 env vars that are set."""
+    keys = []
+    first = os.getenv("GROQ_KEY")
+    if first:
+        keys.append(first)
+    for i in range(2, 21):
+        k = os.getenv(f"GROQ_KEY_{i}")
+        if k:
+            keys.append(k)
+    print(f"✓ Found {len(keys)} Groq key(s)")
+    return keys
+
+
 def images_from_dir(image_dir: str) -> list:
     exts = {".jpg", ".jpeg", ".png", ".webp"}
     return sorted([
@@ -216,13 +230,7 @@ def main():
     parser.add_argument("--output-dir", default="comic_output")
     args = parser.parse_args()
 
-    groq_keys = [
-        os.getenv("GROQ_KEY"),
-        os.getenv("GROQ_KEY_2"),
-        os.getenv("GROQ_KEY_3"),
-        os.getenv("GROQ_KEY_4"),
-    ]
-
+    groq_keys = collect_groq_keys()
     hf_token = os.getenv("HF_TOKEN")
 
     character_config = {
