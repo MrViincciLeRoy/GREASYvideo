@@ -19,6 +19,9 @@ on:
         description: 'Last chapter in this chunk'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   process-chunk:
     runs-on: ubuntu-latest
