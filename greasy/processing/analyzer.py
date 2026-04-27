@@ -189,7 +189,7 @@ YOUR ANALYSIS MUST INCLUDE:
                 }],
                 model=self.model,
                 max_tokens=2000,
-                temperature=0.7
+                temperature=0.4
             )
 
             analysis_text = resp.choices[0].message.content
@@ -307,7 +307,7 @@ Be concise."""
                     }],
                     model=self.model,
                     max_tokens=800,
-                    temperature=0.6
+                    temperature=0.3
                 )
                 page_context = resp.choices[0].message.content
             except Exception as e:
